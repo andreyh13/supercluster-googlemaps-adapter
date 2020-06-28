@@ -6,7 +6,6 @@ import {
   MARKER_CLUSTER_IMAGE_PATH_DEFAULT,
   MAX_ZOOM_DEFAULT,
   MIN_ZOOM_DEFAULT,
-  MIN_CLUSTER_SIZE_DEFAULT,
 } from './constants';
 import { ClustererHelper } from './helper';
 import { IStyle } from './interfaces';
@@ -14,7 +13,6 @@ import { IStyle } from './interfaces';
 export class Builder {
   private pMap: google.maps.Map;
   private pRadius: number = RADIUS_DEFAULT;
-  private pMinClusterSize: number = MIN_CLUSTER_SIZE_DEFAULT;
   private pMaxZoom: number = MAX_ZOOM_DEFAULT;
   private pMinZoom: number = MIN_ZOOM_DEFAULT;
   private pClassName: string = CLASS_NAME_DEFAULT;
@@ -29,11 +27,6 @@ export class Builder {
 
   public withRadius(radius: number): Builder {
     this.pRadius = radius;
-    return this;
-  }
-
-  public withMinClusterSize(minClusterSize: number): Builder {
-    this.pMinClusterSize = minClusterSize;
     return this;
   }
 
@@ -84,10 +77,6 @@ export class Builder {
 
   get radius(): number {
     return this.pRadius ?? RADIUS_DEFAULT;
-  }
-
-  get minClusterSize(): number {
-    return this.pMinClusterSize ?? MIN_CLUSTER_SIZE_DEFAULT;
   }
 
   get maxZoom(): number {
