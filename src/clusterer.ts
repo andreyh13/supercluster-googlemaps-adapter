@@ -1,12 +1,12 @@
 import { Builder } from './builder';
 import { ClustererHelper } from './helper';
-import { IDimension, IStyle, ISums } from './interfaces';
+import { IStyle } from './interfaces';
 import Supercluster from 'supercluster';
+import * as GeoJSON from 'geojson';
 
 const SIZES = [53, 56, 66, 78, 90];
-const hashFeatures: Map<string | number, google.maps.Data.Feature> = new Map();
 
-export class SuperClusterAdapter extends google.maps.OverlayView {
+export class SuperClusterAdapter {
   private pMap: google.maps.Map;
   private pRadius: number;
   private pMinZoom: number;
@@ -16,17 +16,15 @@ export class SuperClusterAdapter extends google.maps.OverlayView {
   private pImagePath: string;
   private pImageExtension: string;
   private pZoomOnClick: boolean;
+  private pDataLayerDeafult: google.maps.Data;
   private pDataLayer: google.maps.Data;
   private pFeatures: google.maps.Data.Feature[] = [];
   private pReady = false;
   private pZoomChangedListener: google.maps.MapsEventListener | null = null;
   private pIdleListener: google.maps.MapsEventListener | null = null;
-  private pFirstIdle = true;
-  private pTilesReady = false;
   private pIndex: Supercluster;
 
   constructor(build: Builder) {
-    super();
     this.pMap = build.map;
     this.pRadius = build.radius;
     this.pMaxZoom = build.maxZoom;
@@ -36,38 +34,38 @@ export class SuperClusterAdapter extends google.maps.OverlayView {
     this.pImagePath = build.imagePath;
     this.pImageExtension = build.imageExtension;
     this.pZoomOnClick = build.zoomOnClick;
-    this.pDataLayer = build.map?.data ?? new google.maps.Data();
+    this.pDataLayerDeafult = build.map?.data;
+    this.pDataLayer = new google.maps.Data();
     this.pIndex = new Supercluster({
       minZoom: this.pMinZoom,
       maxZoom: this.pMaxZoom,
       radius: this.pRadius
     });
-
-    this.init_();
+    this.init();
   }
 
   /* ---- Getters ---- */
-  get map() {
+  get map(): google.maps.Map {
     return this.pMap;
   }
 
-  get radius() {
+  get radius(): number {
     return this.pRadius;
   }
 
-  get maxZoom() {
+  get maxZoom(): number {
     return this.pMaxZoom;
   }
 
-  get minZoom() {
+  get minZoom(): number {
     return this.pMinZoom;
   }
 
-  get className() {
+  get className(): string {
     return this.pClassName;
   }
 
-  get styles() {
+  get styles(): IStyle[] {
     return this.pStyles;
   }
 
@@ -75,44 +73,44 @@ export class SuperClusterAdapter extends google.maps.OverlayView {
     this.pStyles = styles;
   }
 
-  get imagePath() {
+  get imagePath(): string {
     return this.pImagePath;
   }
 
-  get imageExtension() {
+  get imageExtension(): string {
     return this.pImageExtension;
   }
 
-  get isZoomOnClick() {
+  get isZoomOnClick(): boolean {
     return this.pZoomOnClick;
   }
 
-  get dataLayer() {
+  get dataLayer(): google.maps.Data {
     return this.pDataLayer;
   }
 
-  get numFeatures() {
+  get numFeatures(): number {
+    // TODO
     return this.features.length;
   }
 
-  get hasFeatures() {
+  get hasFeatures(): boolean {
     return this.numFeatures > 0;
   }
 
-  get features() {
+  get features(): google.maps.Data.Feature[] {
+    // TODO
     return this.pFeatures;
   }
 
   /* ---- Public methods ---- */
   public setVisible(v: boolean): void {
     if (!v) {
-      this.removeEventListeners_();
-      this.resetViewport_();
+      this.removeEventListeners();
       this.dataLayer.setMap(null);
-      this.setMap(null);
     } else {
+      this.addEventListeners();
       this.dataLayer.setMap(this.pMap);
-      this.setMap(this.pMap);
     }
   }
 
@@ -124,38 +122,18 @@ export class SuperClusterAdapter extends google.maps.OverlayView {
     return featuresBounds;
   }
 
-  public getFeatureDimensions(feature: google.maps.Data.Feature): IDimension {
-    const projection = this.getProjection();
-    const featureBounds = ClustererHelper.featureBounds(feature);
-    const tr = projection.fromLatLngToDivPixel(featureBounds.getNorthEast());
-    const bl = projection.fromLatLngToDivPixel(featureBounds.getSouthWest());
-    return {
-      xsize: tr.x - bl.x,
-      ysize: bl.y - tr.y,
-    };
-  }
-
-  public addFeatureToDataLayer(feature: google.maps.Data.Feature): void {
+  private addFeatureToDataLayer(feature: google.maps.Data.Feature): void {
     this.dataLayer.add(feature);
   }
 
-  public removeFeatureFromDataLayer(feature: google.maps.Data.Feature): void {
-    this.removeFeatureFromDataLayer_(feature);
-  }
-
-  public redraw(): void {
-    if (this.hasFeatures) {
-      this.createClusters_();
-    } else {
-      for (const feature of this.features) {
-        this.removeFeatureFromDataLayer(feature);
-      }
+  private removeFeatureFromDataLayer(feature: google.maps.Data.Feature): void {
+    if (this.dataLayer?.contains(feature)) {
+      this.dataLayer.remove(feature);
     }
   }
 
   public destroy(): void {
-    this.resetViewport_();
-    this.removeEventListeners_();
+    this.removeEventListeners();
     for (const feature of this.features) {
       this.removeFeatureFromDataLayer(feature);
     }
@@ -164,8 +142,16 @@ export class SuperClusterAdapter extends google.maps.OverlayView {
     this.pFeatures = [];
   }
 
-  public addGeoJson(geoJson: object): void {
+  public addGeoJson(geoJson: Supercluster.PointFeature<Supercluster.AnyProps>[]): void {
+    this.pIndex.load(geoJson);
+    this.addEventListeners();
+  }
 
+  public drawClusters(clusters: (Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>)[]): void {
+    this.clearFeatures();
+    for (const feature of clusters) {
+      
+    }
   }
 
   public getStyle(): google.maps.Data.StylingFunction | google.maps.Data.StyleOptions {
@@ -184,146 +170,82 @@ export class SuperClusterAdapter extends google.maps.OverlayView {
     return this.dataLayer.setStyle(style);
   }
 
+  // eslint-disable-next-line @typescript-eslint/ban-types
   public toGeoJson(callback: (json: object) => void): void {
     return this.dataLayer.toGeoJson(callback);
   }
-
-  /* ---- google.maps.OverlayView interface methods ---- */
-  public onAdd(): void {
-    if (!this.getMap()) {
-      return this.onRemove();
-    }
-
-    this.dataLayer.setMap(this.getMap() as google.maps.Map);
-    // Add the map event listeners
-    if (!this.pZoomChangedListener) {
-      this.pZoomChangedListener = google.maps.event.addListener(this.getMap(), 'zoom_changed', () => {
-        const zoom = this.pMap.getZoom();
-      });
-    }
-    if (!this.pIdleListener) {
-      this.pIdleListener = google.maps.event.addListener(this.getMap(), 'idle', () => {
-        if (!this.pFirstIdle) {
-          this.redraw();
-        } else {
-          this.pFirstIdle = this.numFeatures === 0;
-          google.maps.event.trigger(this.pMap, 'tilesLoadedFirst');
-        }
-      });
-    }
-    this.setReady_(true);
-  }
-
-  public onRemove(): void {
-    this.removeEventListeners_();
-    this.dataLayer.setMap(null);
-    this.setReady_(false);
-  }
-
-  /* tslint:disable*/
-  public draw(): void { }
-  /* tslint:enable*/
 
   /* ---- Builder pattern implementation ---- */
   static get Builder(): typeof Builder {
     return Builder;
   }
 
-  private resetViewport_(): void {
-  }
-
-  private setReady_(ready: boolean): void {
-    this.pReady = ready;
-    if (ready) {
-      if (this.hasFeatures && this.pFirstIdle && this.pTilesReady) {
-        this.createClusters_();
-        this.pFirstIdle = false;
-      }
-    }
-  }
-
-  private sortClusters_(): void {
-  }
-
-  private sortFeatures_(): void {
-  }
-
-  private indexLowerBoundLng_(lng: number): number {
-    // It's a binary search algorithm
-    let it: number;
-    let step: number;
-    let first: number = 0;
-    let count = this.features.length;
-    while (count > 0) {
-      step = Math.floor(count / 2);
-      it = first + step;
-      if (ClustererHelper.featureCenter(this.features[it]).lng() < lng) {
-        first = ++it;
-        count -= step + 1;
-      } else {
-        count = step;
-      }
-    }
-    return first;
-  }
-
-  private createClusters_(): void {
-    if (!this.pReady || !this.getMap()) {
+  private getClusters(): void {
+    if (!this.pReady || !this.map) {
       return;
     }
 
-    const mapBounds = (this.getMap() as google.maps.Map).getBounds() ?? new google.maps.LatLngBounds();
-  }
+    const mapBounds = this.map.getBounds() ?? new google.maps.LatLngBounds();
+    const zoom = this.map.getZoom() ?? 0;
 
-  private init_(): void {
-    this.setupStyles_();
-    if (this.pMap) {
-      google.maps.event.addListenerOnce(this.pMap, 'tilesLoadedFirst', () => {
-        this.pTilesReady = true;
-        if (this.pReady) {
-          this.setReady_(this.pReady);
-        }
-      });
-      this.setMap(this.pMap);
+    if (!mapBounds.isEmpty() && zoom) {
+      const bbox: GeoJSON.BBox = [
+        mapBounds.getSouthWest().lng(),
+        mapBounds.getSouthWest().lat(),
+        mapBounds.getNorthEast().lng(),
+        mapBounds.getNorthEast().lat()
+      ];
+      const clusters = this.pIndex.getClusters(bbox, zoom);
     }
   }
 
-  private setupStyles_(): void {
+  private init(): void {
+    this.setupStyles();
+  }
+
+  private setupStyles(): void {
     if (this.pStyles.length) {
       return;
     }
     SIZES.forEach((size, i) => {
       this.pStyles.push({
         height: size,
-        url: this.pImagePath + (i + 1) + '.' + this.pImageExtension,
+        url: `${this.pImagePath}${(i + 1)}.${this.pImageExtension}`,
         width: size,
       });
     });
   }
 
-  private calculator_(features: google.maps.Data.Feature[], numStyles: number): ISums {
-    let index = 0;
-    let dv = features.length;
-    while (dv !== 0) {
-      dv = Math.floor(dv / 10);
-      index++;
+  private addEventListeners(): void {
+    if (!this.map) {
+      return;
     }
-
-    index = Math.min(index, numStyles);
-    return {
-      index,
-      text: `${features.length}`,
-    };
+    if (!this.pZoomChangedListener) {
+      this.pZoomChangedListener = google.maps.event.addListener(this.map, 'zoom_changed', () => {
+        this.getClusters();
+      });
+    }
+    if (!this.pIdleListener) {
+      this.pIdleListener = google.maps.event.addListener(this.map, 'idle', () => {
+        this.getClusters();
+      });
+    }
   }
 
-  private removeEventListeners_(): void {
-    this.pZoomChangedListener?.remove();
-    this.pIdleListener?.remove();
+  private removeEventListeners(): void {
+    if (this.pZoomChangedListener) {
+      this.pZoomChangedListener.remove();
+    }
+    if (this.pIdleListener) {
+      this.pIdleListener.remove();
+    }
   }
 
-  private removeFeatureFromDataLayer_(feature: google.maps.Data.Feature): void {
-    if (this.dataLayer?.contains(feature)) {
-      this.dataLayer.remove(feature);
-    }
+  private clearFeatures(): void {
+    this.dataLayer.forEach(feature => this.dataLayer.remove(feature));
+  }
+
+  private superclusterFeatureToGmapsFeature(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>): google.maps.Data.Feature {
+    
   }
 }
