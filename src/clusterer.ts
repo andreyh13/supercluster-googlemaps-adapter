@@ -149,8 +149,9 @@ export class SuperClusterAdapter {
 
   public drawClusters(clusters: (Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>)[]): void {
     this.clearFeatures();
-    for (const feature of clusters) {
-      
+    for (const scfeature of clusters) {
+      const feature = this.superclusterFeatureToGmapsFeature(scfeature);
+      this.dataLayer.add(feature);
     }
   }
 
@@ -246,6 +247,12 @@ export class SuperClusterAdapter {
   }
 
   private superclusterFeatureToGmapsFeature(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>): google.maps.Data.Feature {
-    
+    const feature = new google.maps.Data.Feature({
+      id: scfeature.id,
+      geometry: new google.maps.LatLng(scfeature.geometry.coordinates[1], scfeature.geometry.coordinates[0]),
+      properties: scfeature.properties
+    });
+
+    return feature;
   }
 }
