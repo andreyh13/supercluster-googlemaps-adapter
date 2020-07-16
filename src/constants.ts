@@ -10,3 +10,5 @@ export const MARKER_CLUSTER_IMAGE_EXTENSION = document.implementation.hasFeature
 )
   ? 'svg'
   : 'png';
+export const ICON_URL_DEFAULT = "http://maps.google.com/mapfiles/kml/paddle/blu-blank.png";
+export const SIZES = [53, 56, 66, 78, 90];

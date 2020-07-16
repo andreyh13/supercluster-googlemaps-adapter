@@ -90,7 +90,7 @@ module.exports = {
                 "format": ["PascalCase"],
                 "custom": {
                     "regex": "^I[A-Z]",
-                    "match": false
+                    "match": true
                 }
             }
         ],

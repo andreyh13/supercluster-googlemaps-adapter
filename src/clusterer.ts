@@ -1,46 +1,51 @@
 import { Builder } from './builder';
 import { ClustererHelper } from './helper';
 import { IStyle } from './interfaces';
+import { SIZES } from './constants';
 import Supercluster from 'supercluster';
 import * as GeoJSON from 'geojson';
-
-const SIZES = [53, 56, 66, 78, 90];
 
 export class SuperClusterAdapter {
   private pMap: google.maps.Map;
   private pRadius: number;
   private pMinZoom: number;
   private pMaxZoom: number;
-  private pClassName: string;
   private pStyles: IStyle[];
   private pImagePath: string;
   private pImageExtension: string;
   private pZoomOnClick: boolean;
-  private pDataLayerDeafult: google.maps.Data;
-  private pDataLayer: google.maps.Data;
-  private pFeatures: google.maps.Data.Feature[] = [];
-  private pReady = false;
+  private pDataLayerDefault: google.maps.Data;
+  private pMarkers: google.maps.Marker[];
   private pZoomChangedListener: google.maps.MapsEventListener | null = null;
   private pIdleListener: google.maps.MapsEventListener | null = null;
   private pIndex: Supercluster;
+  private pointFeatures: Supercluster.PointFeature<Supercluster.AnyProps>[] = [];
+  private pNonPointFeatures: google.maps.Data.Feature[] = [];
+  private pCustomMarkerIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string;
+  private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
+  private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
+  private pFeatureStyle: google.maps.Data.StylingFunction;
 
   constructor(build: Builder) {
     this.pMap = build.map;
     this.pRadius = build.radius;
     this.pMaxZoom = build.maxZoom;
     this.pMinZoom = build.minZoom;
-    this.pClassName = build.className;
     this.pStyles = build.styles;
     this.pImagePath = build.imagePath;
     this.pImageExtension = build.imageExtension;
     this.pZoomOnClick = build.zoomOnClick;
-    this.pDataLayerDeafult = build.map?.data;
-    this.pDataLayer = new google.maps.Data();
+    this.pDataLayerDefault = build.map?.data ?? new google.maps.Data();
+    this.pMarkers = [];
     this.pIndex = new Supercluster({
       minZoom: this.pMinZoom,
       maxZoom: this.pMaxZoom,
       radius: this.pRadius
     });
+    this.pCustomMarkerIcon = build.customMarkerIcon;
+    this.pMarkerClick = build.markerClick;
+    this.pFeatureClick = build.featureClick;
+    this.pFeatureStyle = build.featureStyle;
     this.init();
   }
 
@@ -59,10 +64,6 @@ export class SuperClusterAdapter {
 
   get minZoom(): number {
     return this.pMinZoom;
-  }
-
-  get className(): string {
-    return this.pClassName;
   }
 
   get styles(): IStyle[] {
@@ -85,12 +86,7 @@ export class SuperClusterAdapter {
     return this.pZoomOnClick;
   }
 
-  get dataLayer(): google.maps.Data {
-    return this.pDataLayer;
-  }
-
   get numFeatures(): number {
-    // TODO
     return this.features.length;
   }
 
@@ -98,82 +94,72 @@ export class SuperClusterAdapter {
     return this.numFeatures > 0;
   }
 
-  get features(): google.maps.Data.Feature[] {
-    // TODO
-    return this.pFeatures;
+  get features(): Supercluster.PointFeature<Supercluster.AnyProps>[] {
+    return this.pointFeatures;
   }
 
   /* ---- Public methods ---- */
   public setVisible(v: boolean): void {
     if (!v) {
       this.removeEventListeners();
-      this.dataLayer.setMap(null);
+      this.hideMarkers();
+      this.pDataLayerDefault.setMap(null);
     } else {
       this.addEventListeners();
-      this.dataLayer.setMap(this.pMap);
+      this.showMarkers();
+      this.pDataLayerDefault.setMap(this.pMap);
     }
   }
 
   public getFeaturesBounds(): google.maps.LatLngBounds {
     const featuresBounds = new google.maps.LatLngBounds();
-    for (const feature of this.features) {
-      featuresBounds.union(ClustererHelper.featureBounds(feature));
+    for (const nonPointFeature of this.pNonPointFeatures) {
+      featuresBounds.union(ClustererHelper.featureBounds(nonPointFeature));
+    }
+    for (const pointFeature of this.features) {
+      featuresBounds.extend({
+        lat: pointFeature.geometry.coordinates[1],
+        lng: pointFeature.geometry.coordinates[0]
+      });
     }
     return featuresBounds;
   }
 
-  private addFeatureToDataLayer(feature: google.maps.Data.Feature): void {
-    this.dataLayer.add(feature);
-  }
-
-  private removeFeatureFromDataLayer(feature: google.maps.Data.Feature): void {
-    if (this.dataLayer?.contains(feature)) {
-      this.dataLayer.remove(feature);
-    }
-  }
-
   public destroy(): void {
     this.removeEventListeners();
-    for (const feature of this.features) {
-      this.removeFeatureFromDataLayer(feature);
-    }
-    this.dataLayer.setMap(null);
+    this.removeFeaturesFromDataLayers();
+    this.removeMarkers();
     this.pStyles = [];
-    this.pFeatures = [];
+    this.pNonPointFeatures = [];
+    this.pointFeatures = [];
   }
 
-  public addGeoJson(geoJson: Supercluster.PointFeature<Supercluster.AnyProps>[]): void {
-    this.pIndex.load(geoJson);
-    this.addEventListeners();
-  }
-
-  public drawClusters(clusters: (Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>)[]): void {
-    this.clearFeatures();
-    for (const scfeature of clusters) {
-      const feature = this.superclusterFeatureToGmapsFeature(scfeature);
-      this.dataLayer.add(feature);
+  public load(geoJson: GeoJSON.FeatureCollection): void {
+    if (this.pointFeatures.length || this.pNonPointFeatures.length) {
+      // eslint-disable-next-line no-console
+      console.error("There are loaded data in supercluster adapter already");
     }
-  }
 
-  public getStyle(): google.maps.Data.StylingFunction | google.maps.Data.StyleOptions {
-    return this.dataLayer.getStyle();
-  }
+    const otherFeaturesCollection: GeoJSON.FeatureCollection = {
+      type: "FeatureCollection",
+      features: []
+    };
+    if (geoJson && geoJson.type === 'FeatureCollection' && geoJson.features && geoJson.features.length) {
+      for (const feature of geoJson.features) {
+        if (feature.type === 'Feature' && feature.geometry) {
+          if (feature.geometry.type === 'Point') {
+            this.pointFeatures.push(feature as Supercluster.PointFeature<Supercluster.AnyProps>);
+          } else {
+            otherFeaturesCollection.features.push(feature);
+          }
+        }
+      }
+    }
 
-  public overrideStyle(feature: google.maps.Data.Feature, style: google.maps.Data.StyleOptions): void {
-    return this.dataLayer.overrideStyle(feature, style);
-  }
-
-  public revertStyle(feature?: google.maps.Data.Feature | undefined): void {
-    return this.dataLayer.revertStyle(feature);
-  }
-
-  public setStyle(style: google.maps.Data.StylingFunction | google.maps.Data.StyleOptions): void {
-    return this.dataLayer.setStyle(style);
-  }
-
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  public toGeoJson(callback: (json: object) => void): void {
-    return this.dataLayer.toGeoJson(callback);
+    this.pIndex.load(this.pointFeatures);
+    this.pNonPointFeatures = this.pDataLayerDefault.addGeoJson(otherFeaturesCollection);
+    this.getClusters();
+    this.addEventListeners();
   }
 
   /* ---- Builder pattern implementation ---- */
@@ -182,7 +168,7 @@ export class SuperClusterAdapter {
   }
 
   private getClusters(): void {
-    if (!this.pReady || !this.map) {
+    if (!this.map) {
       return;
     }
 
@@ -197,11 +183,16 @@ export class SuperClusterAdapter {
         mapBounds.getNorthEast().lat()
       ];
       const clusters = this.pIndex.getClusters(bbox, zoom);
+      this.drawClusters(clusters);
     }
   }
 
   private init(): void {
     this.setupStyles();
+    this.pDataLayerDefault.addListener('click', this.pFeatureClick);
+    if (this.pFeatureStyle) {
+      this.pDataLayerDefault.setStyle(this.pFeatureStyle);
+    }
   }
 
   private setupStyles(): void {
@@ -242,17 +233,208 @@ export class SuperClusterAdapter {
     }
   }
 
-  private clearFeatures(): void {
-    this.dataLayer.forEach(feature => this.dataLayer.remove(feature));
+  private drawClusters(clusters: (Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>)[]): void {
+    const mapClusters = this.getClustersMap(this.pMarkers);
+    const mapMarkers = this.getMarkersMap(this.pMarkers);
+    this.pMarkers.length = 0;
+
+    for (const scfeature of clusters) {
+      let marker = this.findExistingMarkerInstance(scfeature, mapClusters, mapMarkers);
+      if (!marker) {
+        marker = this.superclusterFeatureToGmapsMarker(scfeature);
+      }
+      this.pMarkers.push(marker);
+    }
+
+    // Remove the old clusters.
+    for (const oCluster of mapClusters.values()) {
+      oCluster.setMap(null);
+    }
+    for (const oMarker of mapMarkers.values()) {
+      oMarker.setMap(null);
+    }
   }
 
-  private superclusterFeatureToGmapsFeature(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>): google.maps.Data.Feature {
-    const feature = new google.maps.Data.Feature({
-      id: scfeature.id,
-      geometry: new google.maps.LatLng(scfeature.geometry.coordinates[1], scfeature.geometry.coordinates[0]),
-      properties: scfeature.properties
-    });
+  private getClustersMap(collection: google.maps.Marker[]) {
+    const res: Map<number, google.maps.Marker> = new Map<number, google.maps.Marker>();
+    for (const marker of collection) {
+      if (marker.get("cluster") === true) {
+        res.set(marker.get("cluster_id") as number, marker);
+      }
+    }
+    return res;
+  }
 
-    return feature;
+  private getMarkersMap(collection: google.maps.Marker[]) {
+    const res: Map<number | string, google.maps.Marker> = new Map<number | string, google.maps.Marker>();
+    for (const marker of collection) {
+      if (marker.get("cluster") !== true && marker.get("id")) {
+        res.set(marker.get("id"), marker);
+      }
+    }
+    return res;
+  }
+
+  private findExistingMarkerInstance(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>, existingClusters: Map<number, google.maps.Marker>, existingMarkers: Map<number | string, google.maps.Marker>): google.maps.Marker | undefined {
+    let res;
+    if (scfeature.properties.cluster === true) {
+      if (existingClusters.has(scfeature.properties.cluster_id)) {
+        res = existingClusters.get(scfeature.properties.cluster_id);
+        existingClusters.delete(scfeature.properties.cluster_id);
+      }
+    } else {
+      if (scfeature.properties.id && existingMarkers.has(scfeature.properties.id)) {
+        res = existingMarkers.get(scfeature.properties.id);
+        existingMarkers.delete(scfeature.properties.id);
+      }
+    }
+    return res;
+  }
+
+  private clearNonPointFeatures(): void {
+    for (const feature of this.pNonPointFeatures) {
+      if (this.pDataLayerDefault?.contains(feature)) {
+        this.pDataLayerDefault.remove(feature);
+      }
+    }
+  }
+
+  private superclusterFeatureToGmapsMarker(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>): google.maps.Marker {
+    const options = this.getMarkerOptions(scfeature);
+    const marker = new google.maps.Marker(options);
+    this.assignAdditionalProperties(marker, scfeature);
+    this.assignEventsToMarker(marker);
+    return marker;
+  }
+
+  private getMarkerOptions(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>): google.maps.MarkerOptions {
+    let options: google.maps.MarkerOptions;
+    if (scfeature.properties.cluster === true) {
+      options = this.getMarkerOptionsForCluster(scfeature as Supercluster.ClusterFeature<Supercluster.AnyProps>);
+    } else {
+      options = this.getMarkerOptionsForPoint(scfeature);
+    }
+    return options;
+  }
+
+  private getMarkerOptionsForCluster(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>): google.maps.MarkerOptions {
+    const options: google.maps.MarkerOptions = {
+      position: new google.maps.LatLng(scfeature.geometry.coordinates[1], scfeature.geometry.coordinates[0]),
+      map: this.map,
+      clickable: this.pZoomOnClick,
+      icon: this.getClusterIcon(scfeature),
+      label: this.getClusterLabel(scfeature),
+      title: `Cluster ${scfeature.properties.cluster_id}`,
+      visible: true
+    };
+    return options;
+  }
+
+  private getClusterIcon(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>): google.maps.Icon {
+    const index = this.getClusterIconIndex(scfeature);
+    const style: IStyle = this.styles[index];
+    const width = style?.width ?? SIZES[0];
+    const height = style?.height ?? SIZES[0];
+    const anchorX = style?.anchor?.length ? style.anchor[0] : width/2;
+    const anchorY = style?.anchor && style?.anchor.length > 1 ? style.anchor[1] : height/2;
+    const icon = {
+      scaledSize: new google.maps.Size(width, height),
+      anchor: new google.maps.Point(anchorX, anchorY),
+      url: style.url
+    };
+    return icon;
+  }
+
+  private getClusterIconIndex(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>): number {
+    let index = 0;
+    let dv = scfeature.properties.point_count;
+    while (dv !== 0) {
+      dv = Math.floor(dv / 10);
+      index++;
+    }
+    return Math.min(index, this.pStyles.length-1);
+  }
+
+  private getClusterLabel(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>): google.maps.MarkerLabel {
+    const index = this.getClusterIconIndex(scfeature);
+    const style: IStyle = this.styles[index];
+    const label = {
+      color: style?.textColor ?? 'black',
+      fontFamily: style?.fontFamily ?? 'Roboto',
+      fontSize: `${(style?.textSize ?? 14)}px`,
+      fontWeight: style?.fontWeight ?? 'normal',
+      text: `${scfeature.properties.point_count_abbreviated}`
+    };
+    return label;
+  }
+
+  private getMarkerOptionsForPoint(scfeature: Supercluster.PointFeature<Supercluster.AnyProps>): google.maps.MarkerOptions {
+    const options: google.maps.MarkerOptions = {
+      position: new google.maps.LatLng(scfeature.geometry.coordinates[1], scfeature.geometry.coordinates[0]),
+      map: this.map,
+      clickable: true,
+      icon: {
+        scaledSize: new google.maps.Size(32, 32),
+        url: this.pCustomMarkerIcon(scfeature)
+      },
+      title: scfeature.properties.name as string ?? "",
+      visible: true
+    };
+    return options;
+  }
+
+  private assignAdditionalProperties(marker: google.maps.Marker, scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>): void {
+    if (scfeature.id) {
+      marker.set("id", scfeature.id);
+    }
+    if (scfeature.properties.cluster === true) {
+      marker.set("cluster", true);
+      marker.set("cluster_id", scfeature.properties.cluster_id);
+    }
+  }
+
+  private assignEventsToMarker(marker: google.maps.Marker) {
+    if (marker.getClickable()) {
+      marker.addListener('click', (event) => {
+        if (marker.get("cluster") === true) {
+          event.stop();
+          const evPos = event.latLng;
+          const clusterId: number = marker.get("cluster_id") as number;
+          const zoom = this.pIndex.getClusterExpansionZoom(clusterId);
+          this.map.setOptions({
+            center: evPos,
+            zoom
+          });
+        } else {
+          this.pMarkerClick(marker, event);
+        }
+      });
+    }
+  }
+
+  private removeFeaturesFromDataLayers(): void {
+    this.clearNonPointFeatures();
+  }
+
+  private hideMarkers() {
+    if (this.pMarkers && this.pMarkers.length) {
+      for(const marker of this.pMarkers) {
+        marker.setMap(null);
+      }
+    }
+  }
+
+  private showMarkers(markers: google.maps.Marker[] | undefined = undefined) {
+    const markerCollection = markers ?? this.pMarkers;
+    if (markerCollection && markerCollection.length) {
+      for(const marker of markerCollection) {
+        marker.setMap(this.map);
+      }
+    }
+  }
+
+  private removeMarkers() {
+    this.hideMarkers();
+    this.pMarkers = [];
   }
 }

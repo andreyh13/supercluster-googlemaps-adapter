@@ -1,28 +1,50 @@
 import { SuperClusterAdapter } from './clusterer';
 import {
-  CLASS_NAME_DEFAULT,
   RADIUS_DEFAULT,
   MARKER_CLUSTER_IMAGE_EXTENSION,
   MARKER_CLUSTER_IMAGE_PATH_DEFAULT,
   MAX_ZOOM_DEFAULT,
   MIN_ZOOM_DEFAULT,
+  ICON_URL_DEFAULT
 } from './constants';
 import { ClustererHelper } from './helper';
 import { IStyle } from './interfaces';
+import Supercluster from 'supercluster';
 
 export class Builder {
   private pMap: google.maps.Map;
   private pRadius: number = RADIUS_DEFAULT;
   private pMaxZoom: number = MAX_ZOOM_DEFAULT;
   private pMinZoom: number = MIN_ZOOM_DEFAULT;
-  private pClassName: string = CLASS_NAME_DEFAULT;
   private pStyles: IStyle[] = [];
   private pImagePath: string = MARKER_CLUSTER_IMAGE_PATH_DEFAULT;
   private pImageExtension: string = MARKER_CLUSTER_IMAGE_EXTENSION;
   private pZoomOnClick = true;
+  private pCustomMarkerIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string;
+  private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
+  private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
+  private pFeatureStyle: google.maps.Data.StylingFunction;
 
   constructor(map: google.maps.Map) {
     this.pMap = map;
+    this.pCustomMarkerIcon = (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => {
+      if (pointFeature.properties.iconUrl) {
+        return pointFeature.properties.iconUrl as string;
+      }
+      return ICON_URL_DEFAULT;
+    };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    this.pMarkerClick = (marker: google.maps.Marker, event: google.maps.MouseEvent) => {
+      return;
+    };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    this.pFeatureClick = (event: google.maps.Data.MouseEvent) => {
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    this.pFeatureStyle = (feature: google.maps.Data.Feature) => {
+      return Object.create(null) as google.maps.Data.StyleOptions;
+    };
   }
 
   public withRadius(radius: number): Builder {
@@ -37,11 +59,6 @@ export class Builder {
 
   public withMinZoom(minZoom: number): Builder {
     this.pMinZoom = minZoom;
-    return this;
-  }
-
-  public withClassName(className: string): Builder {
-    this.pClassName = className;
     return this;
   }
 
@@ -62,6 +79,26 @@ export class Builder {
 
   public withZoomOnClick(zoomOnClick: boolean): Builder {
     this.pZoomOnClick = zoomOnClick;
+    return this;
+  }
+
+  public withCustomMarkerIcon(customIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string): Builder {
+    this.pCustomMarkerIcon = customIcon as (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string;
+    return this;
+  }
+
+  public withMarkerClick(markerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void): Builder {
+    this.pMarkerClick = markerClick;
+    return this;
+  }
+
+  public withFeatureClick(featureClick: (event: google.maps.Data.MouseEvent) => void): Builder {
+    this.pFeatureClick = featureClick;
+    return this;
+  }
+
+  public withFeatureStyle(featureStyle: google.maps.Data.StylingFunction): Builder {
+    this.pFeatureStyle = featureStyle;
     return this;
   }
 
@@ -87,10 +124,6 @@ export class Builder {
     return this.pMinZoom ?? MIN_ZOOM_DEFAULT;
   }
 
-  get className(): string {
-    return this.pClassName ?? CLASS_NAME_DEFAULT;
-  }
-
   get styles(): IStyle[] {
     return this.pStyles ?? [];
   }
@@ -105,5 +138,21 @@ export class Builder {
 
   get zoomOnClick(): boolean {
     return this.pZoomOnClick ?? true;
+  }
+
+  get customMarkerIcon(): (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string {
+    return this.pCustomMarkerIcon;
+  }
+
+  get markerClick(): (marker: google.maps.Marker, event: google.maps.MouseEvent) => void {
+    return this.pMarkerClick;
+  }
+
+  get featureClick(): (event: google.maps.Data.MouseEvent) => void {
+    return this.pFeatureClick;
+  }
+
+  get featureStyle(): google.maps.Data.StylingFunction {
+    return this.pFeatureStyle;
   }
 }

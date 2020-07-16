@@ -1,7 +1,7 @@
 import { SuperClusterAdapter } from './clusterer';
 
-const hashFeatureCenters: Map<string | number, google.maps.LatLng> = new Map();
-const hashFeaturesBounds: Map<string | number, google.maps.LatLngBounds> = new Map();
+const hashFeatureCenters: Map<string | number, google.maps.LatLng> = new Map<string | number, google.maps.LatLng>();
+const hashFeaturesBounds: Map<string | number, google.maps.LatLngBounds> = new Map<string | number, google.maps.LatLngBounds>();
 const instances: WeakMap<google.maps.Map, SuperClusterAdapter> = new WeakMap();
 
 export class ClustererHelper {
@@ -31,7 +31,7 @@ export class ClustererHelper {
     return res ? res : new google.maps.LatLngBounds();
   }
 
-  public static isFeatureInBounds(feature: google.maps.Data.Feature, bounds: google.maps.LatLngBounds) {
+  public static isFeatureInBounds(feature: google.maps.Data.Feature, bounds: google.maps.LatLngBounds): boolean {
     if (bounds) {
       const geom = feature.getGeometry();
       if (geom.getType() === 'Point') {
@@ -44,7 +44,7 @@ export class ClustererHelper {
     }
   }
 
-  public static getClusterer(map: google.maps.Map) {
+  public static getClusterer(map: google.maps.Map): SuperClusterAdapter | undefined {
     if (instances.has(map)) {
       return instances.get(map);
     }
@@ -54,7 +54,9 @@ export class ClustererHelper {
   public static setClusterer(map: google.maps.Map, clusterer: SuperClusterAdapter): void {
     if (instances.has(map)) {
       const prevInstance = instances.get(map);
-      prevInstance?.destroy();
+      if (prevInstance) {
+        prevInstance.destroy();
+      }
       instances.delete(map);
     }
     instances.set(map, clusterer);
