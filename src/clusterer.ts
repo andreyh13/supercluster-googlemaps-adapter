@@ -25,6 +25,7 @@ export class SuperClusterAdapter {
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pFeatureStyle: google.maps.Data.StylingFunction;
+  private pServerSideFeatureToSuperCluster: (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
 
   constructor(build: Builder) {
     this.pMap = build.map;
@@ -46,6 +47,7 @@ export class SuperClusterAdapter {
     this.pMarkerClick = build.markerClick;
     this.pFeatureClick = build.featureClick;
     this.pFeatureStyle = build.featureStyle;
+    this.pServerSideFeatureToSuperCluster = build.serverSideFeatureToSuperCluster;
     this.init();
   }
 
@@ -160,6 +162,17 @@ export class SuperClusterAdapter {
     this.pNonPointFeatures = this.pDataLayerDefault.addGeoJson(otherFeaturesCollection);
     this.getClusters();
     this.addEventListeners();
+  }
+
+  public drawServerSideCalculatedClusters(features: any[]) {
+    const scfeatures: (Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>)[] = [];
+    if (features && features.length) {
+      for (const feature of features) {
+        const scfeature = this.pServerSideFeatureToSuperCluster(feature);
+        scfeatures.push(scfeature);
+      }
+    }
+    this.drawClusters(scfeatures);
   }
 
   /* ---- Builder pattern implementation ---- */
@@ -335,8 +348,8 @@ export class SuperClusterAdapter {
     const style: IStyle = this.styles[index];
     const width = style?.width ?? SIZES[0];
     const height = style?.height ?? SIZES[0];
-    const anchorX = style?.anchor?.length ? style.anchor[0] : width/2;
-    const anchorY = style?.anchor && style?.anchor.length > 1 ? style.anchor[1] : height/2;
+    const anchorX = style?.anchor?.length ? style.anchor[0] : width / 2;
+    const anchorY = style?.anchor && style?.anchor.length > 1 ? style.anchor[1] : height / 2;
     const icon = {
       scaledSize: new google.maps.Size(width, height),
       anchor: new google.maps.Point(anchorX, anchorY),
@@ -352,7 +365,7 @@ export class SuperClusterAdapter {
       dv = Math.floor(dv / 10);
       index++;
     }
-    return Math.min(index, this.pStyles.length-1);
+    return Math.min(index, this.pStyles.length - 1);
   }
 
   private getClusterLabel(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>): google.maps.MarkerLabel {
@@ -418,7 +431,7 @@ export class SuperClusterAdapter {
 
   private hideMarkers() {
     if (this.pMarkers && this.pMarkers.length) {
-      for(const marker of this.pMarkers) {
+      for (const marker of this.pMarkers) {
         marker.setMap(null);
       }
     }
@@ -427,7 +440,7 @@ export class SuperClusterAdapter {
   private showMarkers(markers: google.maps.Marker[] | undefined = undefined) {
     const markerCollection = markers ?? this.pMarkers;
     if (markerCollection && markerCollection.length) {
-      for(const marker of markerCollection) {
+      for (const marker of markerCollection) {
         marker.setMap(this.map);
       }
     }

@@ -24,6 +24,7 @@ export class Builder {
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pFeatureStyle: google.maps.Data.StylingFunction;
+  private pServerSideFeatureToSuperCluster: (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
 
   constructor(map: google.maps.Map) {
     this.pMap = map;
@@ -44,6 +45,18 @@ export class Builder {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     this.pFeatureStyle = (feature: google.maps.Data.Feature) => {
       return Object.create(null) as google.maps.Data.StyleOptions;
+    };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    this.pServerSideFeatureToSuperCluster = (feature: any) => {
+      const scfeature: Supercluster.PointFeature<Supercluster.AnyProps> = {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [0, 0]
+        },
+        properties: {}
+      };
+      return scfeature;
     };
   }
 
@@ -102,6 +115,11 @@ export class Builder {
     return this;
   }
 
+  public withServerSideFeatureToSuperCluster(transform: (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>): Builder {
+    this.pServerSideFeatureToSuperCluster = transform;
+    return this;
+  }
+
   public build(): SuperClusterAdapter {
     const clusterer = new SuperClusterAdapter(this);
     ClustererHelper.setClusterer(this.pMap, clusterer);
@@ -154,5 +172,9 @@ export class Builder {
 
   get featureStyle(): google.maps.Data.StylingFunction {
     return this.pFeatureStyle;
+  }
+
+  get serverSideFeatureToSuperCluster(): (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps> {
+    return this.pServerSideFeatureToSuperCluster;
   }
 }
