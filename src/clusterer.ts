@@ -47,6 +47,7 @@ export class SuperClusterAdapter {
     this.pMarkerClick = build.markerClick;
     this.pFeatureClick = build.featureClick;
     this.pFeatureStyle = build.featureStyle;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.pServerSideFeatureToSuperCluster = build.serverSideFeatureToSuperCluster;
     this.init();
   }
@@ -164,7 +165,7 @@ export class SuperClusterAdapter {
     this.addEventListeners();
   }
 
-  public drawServerSideCalculatedClusters(features: any[]) {
+  public drawServerSideCalculatedClusters(features: any[]): void {
     const scfeatures: (Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>)[] = [];
     if (features && features.length) {
       for (const feature of features) {
@@ -337,7 +338,7 @@ export class SuperClusterAdapter {
       clickable: this.pZoomOnClick,
       icon: this.getClusterIcon(scfeature),
       label: this.getClusterLabel(scfeature),
-      title: `Cluster ${scfeature.properties.cluster_id}`,
+      title: `${scfeature.properties.point_count_abbreviated} positions in the cluster`,
       visible: true
     };
     return options;
