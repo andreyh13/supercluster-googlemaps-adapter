@@ -1,6 +1,6 @@
 import { Builder } from './builder';
 import { ClustererHelper } from './helper';
-import { IStyle } from './interfaces';
+import { IStyle, IOverlappingMarkerSpiderfier } from './interfaces';
 import { SIZES } from './constants';
 import Supercluster from 'supercluster';
 import * as GeoJSON from 'geojson';
@@ -26,6 +26,7 @@ export class SuperClusterAdapter {
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pFeatureStyle: google.maps.Data.StylingFunction;
   private pServerSideFeatureToSuperCluster: (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
+  private pOverlapMarkerSpiderfier: IOverlappingMarkerSpiderfier | null;
 
   constructor(build: Builder) {
     this.pMap = build.map;
@@ -49,6 +50,7 @@ export class SuperClusterAdapter {
     this.pFeatureStyle = build.featureStyle;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.pServerSideFeatureToSuperCluster = build.serverSideFeatureToSuperCluster;
+    this.pOverlapMarkerSpiderfier = build.overlapMarkerSpiderfier;
     this.init();
   }
 
@@ -266,6 +268,9 @@ export class SuperClusterAdapter {
     }
     for (const oMarker of mapMarkers.values()) {
       oMarker.setMap(null);
+      if (this.pOverlapMarkerSpiderfier) {
+        this.pOverlapMarkerSpiderfier.forgetMarker(oMarker);
+      }
     }
   }
 
@@ -404,12 +409,17 @@ export class SuperClusterAdapter {
     if (scfeature.properties.cluster === true) {
       marker.set("cluster", true);
       marker.set("cluster_id", scfeature.properties.cluster_id);
+    } else {
+      if (this.pOverlapMarkerSpiderfier) {
+        this.pOverlapMarkerSpiderfier.trackMarker(marker);
+      }
     }
   }
 
   private assignEventsToMarker(marker: google.maps.Marker) {
     if (marker.getClickable()) {
-      marker.addListener('click', (event) => {
+      const eventName: string = this.getClickEventName(marker);
+      marker.addListener(eventName, (event) => {
         if (marker.get("cluster") === true) {
           event.stop();
           const evPos = event.latLng;
@@ -424,6 +434,14 @@ export class SuperClusterAdapter {
         }
       });
     }
+  }
+
+  private getClickEventName(marker: google.maps.Marker): string {
+    let eventName = "click";
+    if (marker.get("cluster") !== true && this.pOverlapMarkerSpiderfier) {
+      eventName = "spider_click";
+    }
+    return eventName;
   }
 
   private removeFeaturesFromDataLayers(): void {

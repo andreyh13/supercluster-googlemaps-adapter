@@ -8,7 +8,7 @@ import {
   ICON_URL_DEFAULT
 } from './constants';
 import { ClustererHelper } from './helper';
-import { IStyle } from './interfaces';
+import { IStyle, IOverlappingMarkerSpiderfier } from './interfaces';
 import Supercluster from 'supercluster';
 
 export class Builder {
@@ -25,6 +25,7 @@ export class Builder {
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pFeatureStyle: google.maps.Data.StylingFunction;
   private pServerSideFeatureToSuperCluster: (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
+  private pOverlapMarkerSpiderfier: IOverlappingMarkerSpiderfier | null = null;
 
   constructor(map: google.maps.Map) {
     this.pMap = map;
@@ -120,6 +121,11 @@ export class Builder {
     return this;
   }
 
+  public withOverlapMarkerSpiderfier(oms: IOverlappingMarkerSpiderfier): Builder {
+    this.pOverlapMarkerSpiderfier = oms;
+    return this;
+  }
+
   public build(): SuperClusterAdapter {
     const clusterer = new SuperClusterAdapter(this);
     ClustererHelper.setClusterer(this.pMap, clusterer);
@@ -176,5 +182,9 @@ export class Builder {
 
   get serverSideFeatureToSuperCluster(): (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps> {
     return this.pServerSideFeatureToSuperCluster;
+  }
+
+  get overlapMarkerSpiderfier(): IOverlappingMarkerSpiderfier | null {
+    return this.pOverlapMarkerSpiderfier;
   }
 }
