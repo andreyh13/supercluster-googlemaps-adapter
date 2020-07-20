@@ -5,7 +5,7 @@ import {
   MARKER_CLUSTER_IMAGE_PATH_DEFAULT,
   MAX_ZOOM_DEFAULT,
   MIN_ZOOM_DEFAULT,
-  ICON_URL_DEFAULT
+  ICON_URL_DEFAULT,
 } from './constants';
 import { ClustererHelper } from './helper';
 import { IStyle, OverlappingMarkerSpiderfier } from './interfaces';
@@ -24,7 +24,9 @@ export class Builder {
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pFeatureStyle: google.maps.Data.StylingFunction;
-  private pServerSideFeatureToSuperCluster: (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
+  private pServerSideFeatureToSuperCluster: (
+    feature: any,
+  ) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
   private pOverlapMarkerSpiderfier: OverlappingMarkerSpiderfier | null = null;
 
   constructor(map: google.maps.Map) {
@@ -42,7 +44,7 @@ export class Builder {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     this.pFeatureClick = (event: google.maps.Data.MouseEvent) => {
       return;
-    }
+    };
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     this.pFeatureStyle = (feature: google.maps.Data.Feature) => {
       return Object.create(null) as google.maps.Data.StyleOptions;
@@ -50,12 +52,12 @@ export class Builder {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     this.pServerSideFeatureToSuperCluster = (feature: any) => {
       const scfeature: Supercluster.PointFeature<Supercluster.AnyProps> = {
-        type: "Feature",
+        type: 'Feature',
         geometry: {
-          type: "Point",
-          coordinates: [0, 0]
+          type: 'Point',
+          coordinates: [0, 0],
         },
-        properties: {}
+        properties: {},
       };
       return scfeature;
     };
@@ -96,7 +98,9 @@ export class Builder {
     return this;
   }
 
-  public withCustomMarkerIcon(customIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string): Builder {
+  public withCustomMarkerIcon(
+    customIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string,
+  ): Builder {
     this.pCustomMarkerIcon = customIcon as (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string;
     return this;
   }
@@ -116,7 +120,11 @@ export class Builder {
     return this;
   }
 
-  public withServerSideFeatureToSuperCluster(transform: (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>): Builder {
+  public withServerSideFeatureToSuperCluster(
+    transform: (
+      feature: any,
+    ) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>,
+  ): Builder {
     this.pServerSideFeatureToSuperCluster = transform;
     return this;
   }
@@ -180,7 +188,9 @@ export class Builder {
     return this.pFeatureStyle;
   }
 
-  get serverSideFeatureToSuperCluster(): (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps> {
+  get serverSideFeatureToSuperCluster(): (
+    feature: any,
+  ) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps> {
     return this.pServerSideFeatureToSuperCluster;
   }
 

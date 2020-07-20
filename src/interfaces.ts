@@ -10,8 +10,14 @@ export interface IStyle {
 }
 
 export interface IOverlappingMarkerSpiderfier {
-  trackMarker: (marker: google.maps.Marker, listener?: (event: google.maps.MouseEvent) => void) => IOverlappingMarkerSpiderfier;
-  addMarker: (marker: google.maps.Marker, listener?: (event: google.maps.MouseEvent) => void) => IOverlappingMarkerSpiderfier;
+  trackMarker: (
+    marker: google.maps.Marker,
+    listener?: (event: google.maps.MouseEvent) => void,
+  ) => IOverlappingMarkerSpiderfier;
+  addMarker: (
+    marker: google.maps.Marker,
+    listener?: (event: google.maps.MouseEvent) => void,
+  ) => IOverlappingMarkerSpiderfier;
   forgetMarker: (marker: google.maps.Marker) => IOverlappingMarkerSpiderfier;
   removeMarker: (marker: google.maps.Marker) => IOverlappingMarkerSpiderfier;
   forgetAllMarkers: () => IOverlappingMarkerSpiderfier;
@@ -24,4 +30,3 @@ export interface IOverlappingMarkerSpiderfier {
 }
 
 export type OverlappingMarkerSpiderfier = IOverlappingMarkerSpiderfier;
-

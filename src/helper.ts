@@ -1,7 +1,10 @@
 import { SuperClusterAdapter } from './clusterer';
 
 const hashFeatureCenters: Map<string | number, google.maps.LatLng> = new Map<string | number, google.maps.LatLng>();
-const hashFeaturesBounds: Map<string | number, google.maps.LatLngBounds> = new Map<string | number, google.maps.LatLngBounds>();
+const hashFeaturesBounds: Map<string | number, google.maps.LatLngBounds> = new Map<
+  string | number,
+  google.maps.LatLngBounds
+>();
 const instances: WeakMap<google.maps.Map, SuperClusterAdapter> = new WeakMap();
 
 export class ClustererHelper {
@@ -22,7 +25,7 @@ export class ClustererHelper {
     if (!hashFeaturesBounds.has(feature.getId())) {
       const geom = feature.getGeometry();
       const geomBounds = new google.maps.LatLngBounds();
-      geom.forEachLatLng(latLng => {
+      geom.forEachLatLng((latLng) => {
         geomBounds.extend(latLng);
       });
       hashFeaturesBounds.set(feature.getId(), geomBounds);
