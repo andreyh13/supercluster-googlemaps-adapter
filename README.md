@@ -1,10 +1,6 @@
 # Supercluster Adapter for Google Maps JavaScript API v3
 
-[![npm version](http://img.shields.io/npm/v/supercluster-googlemaps-adapter.svg?style=flat)](https://npmjs.org/package/supercluster-googlemaps-adapter "View this project on npm")
-
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/andreyh13/supercluster-googlemaps-adapter)
-
-[![license](https://img.shields.io/github/license/andreyh13/supercluster-googlemaps-adapter)]
+[![npm version](http://img.shields.io/npm/v/supercluster-googlemaps-adapter.svg?style=flat)](https://npmjs.org/package/supercluster-googlemaps-adapter "View this project on npm") ![GitHub release (latest by date)](https://img.shields.io/github/v/release/andreyh13/supercluster-googlemaps-adapter) ![license](https://img.shields.io/github/license/andreyh13/supercluster-googlemaps-adapter)
 
 The Supercluster adapter for Google Maps JavaScript API v3 brings functionality of the [supercluster](https://github.com/mapbox/supercluster) a very fast geospatial point clustering library to Google Maps.
 
