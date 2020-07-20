@@ -8,7 +8,7 @@ The library accepts a standard GeoJSON [FeatureCollection][feature-collection]. 
 
 The Supercluster adapter library can be served from the firebase host. Add the following script tag in your html file.
 
-    <script src="https://maps-tools-242a6.firebaseapp.com/clusterer/supercluster/superclustergmapsadapter.js">
+    <script src="https://maps-tools-242a6.firebaseapp.com/clusterer/supercluster/index.js">
     </script>
 
 Please note that this library depends on the Google Maps JavaScript API, so it should be initialized once the Google Maps JavaScript API is fully loaded.
