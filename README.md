@@ -1,5 +1,11 @@
 # Supercluster Adapter for Google Maps JavaScript API v3
 
+[![npm version](http://img.shields.io/npm/v/supercluster-googlemaps-adapter.svg?style=flat)](https://npmjs.org/package/supercluster-googlemaps-adapter "View this project on npm")
+
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/andreyh13/supercluster-googlemaps-adapter)
+
+[![license](https://img.shields.io/github/license/andreyh13/supercluster-googlemaps-adapter)]
+
 The Supercluster adapter for Google Maps JavaScript API v3 brings functionality of the [supercluster](https://github.com/mapbox/supercluster) a very fast geospatial point clustering library to Google Maps.
 
 The library accepts a standard GeoJSON [FeatureCollection][feature-collection]. The feature collection might contain any geometry features. All features with a [Point][point] geometry will be clusterized with a supercluster while all non-Point features will be added to the Google Maps Data Layer. The library provides several callbacks that allow customize point or cluster markers as well as data layer features appearence and behavior.
@@ -10,6 +16,14 @@ The Supercluster adapter library can be served from the firebase host. Add the f
 
     <script src="https://maps-tools-242a6.firebaseapp.com/clusterer/supercluster/index.js">
     </script>
+
+It can also be installed from npm
+
+    npm install supercluster-googlemaps-adapter --save
+
+Add library to your javascript or typescript file as
+
+    import SuperClusterAdapter from 'supercluster-googlemaps-adapter';
 
 Please note that this library depends on the Google Maps JavaScript API, so it should be initialized once the Google Maps JavaScript API is fully loaded.
 
@@ -312,6 +326,14 @@ Returns bounds for all features loaded to supercluster
 ## Demo
 
 The live demo is available at https://maps-tools-242a6.firebaseapp.com/clusterer/demos/supercluster.html
+
+The demo that demonstrates usage of server side clustering and draw clusters can be found at https://maps-tools-242a6.firebaseapp.com/clusterer/demos/superclusterwithserverside.html
+
+Stackblitz samples:
+
+- [JavaScript](https://stackblitz.com/edit/js-qcam3s)
+- [Angular](https://stackblitz.com/edit/angular-ivy-yj32ww)
+- [React](https://stackblitz.com/edit/react-ts-kx7q4q)
 
 ## Licence
 
