@@ -30,7 +30,7 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
-    filename: 'superclustergmapsadapter.js',
+    filename: 'index.js',
     path: path.resolve(__dirname, 'lib'),
     libraryTarget: 'var',
     library: 'SuperClusterAdapter',
