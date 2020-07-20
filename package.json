@@ -1,6 +1,6 @@
 {
   "name": "supercluster-googlemaps-adapter",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Supercluster Adapter for Google Maps JavaScript API v3",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
