@@ -238,6 +238,32 @@ E.g.
 
 Please note that for clusters you have to define mandatory properties `cluster, cluster_id, point_count, point_count_abbreviated`. The feature that you return is a GeoJSON [Feature][feature] with [Point][point] geometry.
 
+#### withOverlapMarkerSpiderfier(oms: OverlappingMarkerSpiderfier)
+
+The Supercluster adapter can be used in conjunction with the [Overlapping Marker Spiderfier](https://github.com/jawj/OverlappingMarkerSpiderfier).
+
+In order to use the Overlapping Marker Spiderfier include the following script in your html page
+
+`<script src="https://cdnjs.cloudflare.com/ajax/libs/OverlappingMarkerSpiderfier/1.0.3/oms.min.js"></script>`
+
+Initialize the instance of spiderfier once you have initialized a map instance. E.g.
+
+    var oms = new OverlappingMarkerSpiderfier(map, {
+      markersWontMove: true,
+      markersWontHide: true,
+      basicFormatEvents: true,
+      ignoreMapClick: true,
+      keepSpiderfied: true
+    });
+
+Pass instance of spidefier to the supercluster adapter builder:
+
+    const clusterer = new Clusterer.Builder(map)
+        .withOverlapMarkerSpiderfier(oms)
+        .build();
+
+Enjoy.
+
 ### Loading features to clusterer
 
 In order to load features to cluster you should use method

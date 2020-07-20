@@ -1,6 +1,6 @@
 import { Builder } from './builder';
 import { ClustererHelper } from './helper';
-import { IStyle, IOverlappingMarkerSpiderfier } from './interfaces';
+import { IStyle, OverlappingMarkerSpiderfier } from './interfaces';
 import { SIZES } from './constants';
 import Supercluster from 'supercluster';
 import * as GeoJSON from 'geojson';
@@ -26,7 +26,7 @@ export class SuperClusterAdapter {
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pFeatureStyle: google.maps.Data.StylingFunction;
   private pServerSideFeatureToSuperCluster: (feature: any) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
-  private pOverlapMarkerSpiderfier: IOverlappingMarkerSpiderfier | null;
+  private pOverlapMarkerSpiderfier: OverlappingMarkerSpiderfier | null;
 
   constructor(build: Builder) {
     this.pMap = build.map;
@@ -419,7 +419,7 @@ export class SuperClusterAdapter {
   private assignEventsToMarker(marker: google.maps.Marker) {
     if (marker.getClickable()) {
       const eventName: string = this.getClickEventName(marker);
-      marker.addListener(eventName, (event) => {
+      google.maps.event.addListener(marker, eventName, (event: google.maps.MouseEvent) => {
         if (marker.get("cluster") === true) {
           event.stop();
           const evPos = event.latLng;

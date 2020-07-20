@@ -23,3 +23,5 @@ export interface IOverlappingMarkerSpiderfier {
   unspiderfy: () => IOverlappingMarkerSpiderfier;
 }
 
+export type OverlappingMarkerSpiderfier = IOverlappingMarkerSpiderfier;
+
