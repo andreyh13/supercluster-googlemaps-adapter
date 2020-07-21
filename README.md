@@ -92,11 +92,11 @@ The Builder class supports a set of public methods that allow customize the clus
 
 #### withRadius(radius: number)
 
-Defines cluster radius, in pixels. Default value is 40.
+Defines cluster radius, in pixels. Default value is 80.
 
 #### withMaxZoom(maxZoom: number)
 
-Maximum zoom level at which clusters are generated. Default: 17.
+Maximum zoom level at which clusters are generated. Default: 19.
 
 #### withMinZoom(minZoom: number)
 
