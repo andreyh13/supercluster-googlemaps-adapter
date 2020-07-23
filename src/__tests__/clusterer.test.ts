@@ -1,15 +1,15 @@
 import { setupGoogleMapsAPIMock } from '../aux/mockgooglemapsapi';
-import { Loader } from '../index';
+import { SuperClusterAdapterLoader } from '../index';
 
 beforeAll(() => {
   setupGoogleMapsAPIMock();
 });
 
 test('Clusterer loader', () => {
-  expect(Loader.getClusterer()).toBeDefined();
+  expect(SuperClusterAdapterLoader.getClusterer()).toBeDefined();
 });
 
 test('Clusterer loader async call', async () => {
-  const clusterer = await Loader.getClusterer();
+  const clusterer = await SuperClusterAdapterLoader.getClusterer();
   expect(clusterer).toBeDefined();
 });
