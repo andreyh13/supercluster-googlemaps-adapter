@@ -19,7 +19,7 @@ It can also be installed from npm
 
 Add library to your javascript or typescript file as
 
-    import SuperClusterAdapter from 'supercluster-googlemaps-adapter';
+    import { SuperClusterAdapterLoader } from 'supercluster-googlemaps-adapter';
 
 Please note that this library depends on the Google Maps JavaScript API, so it should be initialized once the Google Maps JavaScript API is fully loaded.
 
@@ -40,7 +40,7 @@ E.g.
       });
 
       google.maps.event.addListenerOnce(map, 'tilesloaded', () => {
-        SuperClusterAdapter.getClusterer().then(Clusterer => {
+        SuperClusterAdapterLoader.getClusterer().then(Clusterer => {
           if (Clusterer) {
             const clusterer = new Clusterer.Builder(map)
               .withRadius(80)
@@ -62,15 +62,15 @@ E.g.
 
 In this example the clusterer iniatialization was carried out as a response to `tilesloaded` event of map instance. This event is triggered when all tiles of Google Maps are loaded and map is ready to be used.
 
-Note that clusterer is loaded asynchronously, so the logic should be implemented once MarkerClusterer.getClusterer() promise is resolved.
+Note that clusterer is loaded asynchronously, so the logic should be implemented once SuperClusterAdapterLoader.getClusterer() promise is resolved.
 
 ### Setting up clusterer
 
-In order to set up a clusterer you should call `SuperClusterAdapter.getClusterer()` method that returns a promise. Once resolved the promise you will have a Clusterer class that should be used to create an instance of clusterer object.
+In order to set up a clusterer you should call `SuperClusterAdapterLoader.getClusterer()` method that returns a promise. Once resolved the promise you will have a Clusterer class that should be used to create an instance of clusterer object.
 
 Code snippet is the following
 
-    SuperClusterAdapter.getClusterer().then(Clusterer => {
+    SuperClusterAdapterLoader.getClusterer().then(Clusterer => {
       if (Clusterer) {
         // TODO: create instance of clusterer
       }
@@ -310,6 +310,14 @@ E.g.
 #### setVisible(v: boolean)
 
 Allows set visibility of clusterer
+
+#### setVisibleMarkersAndClusters(v: boolean)
+
+Allows set visibility for markers and clusters only (items with Point geometry)
+
+#### setVisibleDataLayerFeatures(v: boolean)
+
+Allows set visibility for data layer features (items with non-Point geometry)
 
 #### destroy()
 

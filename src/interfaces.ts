@@ -1,3 +1,30 @@
+import * as GeoJSON from 'geojson';
+import { Builder } from './builder';
+
+export interface ISuperClusterAdapter {
+  map: google.maps.Map;
+  radius: number;
+  maxZoom: number;
+  minZoom: number;
+  styles: IStyle[];
+  imagePath: string;
+  imageExtension: string;
+  isZoomOnClick: boolean;
+  numFeatures: number;
+  hasFeatures: boolean;
+  features: GeoJSON.Feature<GeoJSON.Point>[];
+  setVisible: (v: boolean) => void;
+  setVisibleMarkersAndClusters: (v: boolean) => void;
+  setVisibleDataLayerFeatures: (v: boolean) => void;
+  getFeaturesBounds: () => google.maps.LatLngBounds;
+  destroy: () => void;
+  load: (geoJson: GeoJSON.FeatureCollection) => void;
+  drawServerSideCalculatedClusters: (features: any[]) => void;
+}
+
+export interface ISuperClusterAdapterStatic {
+  Builder: typeof Builder;
+}
 export interface IStyle {
   url: string;
   height: number;

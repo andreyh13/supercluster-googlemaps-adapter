@@ -22,41 +22,24 @@ const config = {
   },
 };
 
-const configVar = Object.assign({}, config, {
-  name: "configVar",
-  entry: './src/index.ts',
-  output: {
-    filename: 'superclustergmapsadapter.js',
-    path: path.resolve(__dirname, 'lib'),
-    libraryTarget: 'var',
-    library: 'SuperClusterAdapter',
-    libraryExport: 'Loader',
-  },
-  plugins: [
-    new CleanWebpackPlugin(),
-    new CopyWebpackPlugin({
-      patterns: [
-          { from: 'src/images', to: 'images' }
-      ]
-    })
-  ],
-});
-
 const configUmd = Object.assign({}, config, {
   name: "configUmd",
-  entry: './src/index.ts',
+  entry: {
+    'index': './src/index.ts',
+    'index.min': './src/index.ts'
+  },
   output: {
-    filename: 'index.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'lib'),
     libraryTarget: 'umd',
-    library: 'SuperClusterAdapter',
-    libraryExport: 'Loader',
+    library: 'SuperClusterAdapterLoader',
+    libraryExport: 'SuperClusterAdapterLoader',
   },
   plugins: [
     new CleanWebpackPlugin(),
     new CopyWebpackPlugin({
       patterns: [
-          { from: 'src/images', to: 'images' }
+        { from: 'src/images', to: 'images' }
       ]
     })
   ],

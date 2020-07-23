@@ -1,5 +1,6 @@
-export class Loader {
-  public static async getClusterer(): Promise<any> {
+import { ISuperClusterAdapterStatic } from "./interfaces";
+export class SuperClusterAdapterLoader {
+  public static async getClusterer(): Promise<ISuperClusterAdapterStatic | undefined> {
     if (google && google.maps) {
       const module = await import('./clusterer');
       return module.SuperClusterAdapter;

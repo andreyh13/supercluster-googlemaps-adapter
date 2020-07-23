@@ -1,11 +1,11 @@
 import { Builder } from './builder';
 import { ClustererHelper } from './helper';
-import { IStyle, OverlappingMarkerSpiderfier } from './interfaces';
+import { IStyle, OverlappingMarkerSpiderfier, ISuperClusterAdapter, ISuperClusterAdapterStatic } from './interfaces';
 import { SIZES } from './constants';
 import Supercluster from 'supercluster';
 import * as GeoJSON from 'geojson';
 
-export class SuperClusterAdapter {
+export class SuperClusterAdapter implements ISuperClusterAdapter {
   private pMap: google.maps.Map;
   private pRadius: number;
   private pMinZoom: number;
@@ -107,13 +107,24 @@ export class SuperClusterAdapter {
 
   /* ---- Public methods ---- */
   public setVisible(v: boolean): void {
+    this.setVisibleMarkersAndClusters(v);
+    this.setVisibleDataLayerFeatures(v);
+  }
+
+  public setVisibleMarkersAndClusters(v: boolean): void {
     if (!v) {
       this.removeEventListeners();
       this.hideMarkers();
-      this.pDataLayerDefault.setMap(null);
     } else {
       this.addEventListeners();
       this.showMarkers();
+    }
+  }
+
+  public setVisibleDataLayerFeatures(v: boolean): void {
+    if (!v) {
+      this.pDataLayerDefault.setMap(null);
+    } else {
       this.pDataLayerDefault.setMap(this.pMap);
     }
   }
