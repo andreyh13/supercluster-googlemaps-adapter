@@ -1,4 +1,4 @@
-import { ISuperClusterAdapterStatic } from "./interfaces";
+import { ISuperClusterAdapterStatic } from './interfaces';
 export class SuperClusterAdapterLoader {
   public static async getClusterer(): Promise<ISuperClusterAdapterStatic | undefined> {
     if (google && google.maps) {
