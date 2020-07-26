@@ -28,7 +28,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     feature: any,
   ) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
   private pOverlapMarkerSpiderfier: OverlappingMarkerSpiderfier | null;
-  private pUseServerSideClusterer: boolean = false;
+  private pUseServerSideClusterer = false;
   private pGetClustersServerSide: ((bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>);
 
   constructor(build: Builder) {
@@ -192,7 +192,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
 
     this.pIndex.load(this.pointFeatures);
     this.pNonPointFeatures = this.pDataLayerDefault.addGeoJson(otherFeaturesCollection);
-    this.getClusters();
+    void this.getClusters();
     this.addEventListeners();
   }
 
@@ -252,7 +252,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
       this.pDataLayerDefault.setStyle(this.pFeatureStyle);
     }
     if (this.useServerSideClusterer) {
-      this.getClusters();
+      void this.getClusters();
       this.addEventListeners();
     }
   }
@@ -276,7 +276,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     }
     if (!this.pIdleListener) {
       this.pIdleListener = google.maps.event.addListener(this.map, 'idle', () => {
-        this.getClusters();
+        void this.getClusters();
       });
     }
   }

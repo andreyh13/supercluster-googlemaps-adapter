@@ -8,7 +8,7 @@ const hashFeaturesBounds: Map<string | number, google.maps.LatLngBounds> = new M
 const instances: WeakMap<google.maps.Map, SuperClusterAdapter> = new WeakMap();
 
 export class ClustererHelper {
-  private static newId: number = 1;
+  private static newId = 1;
 
   public static featureCenter(feature: google.maps.Data.Feature): google.maps.LatLng {
     if (!hashFeatureCenters.has(feature.getId())) {
