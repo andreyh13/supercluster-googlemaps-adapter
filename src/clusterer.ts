@@ -29,7 +29,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   ) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
   private pOverlapMarkerSpiderfier: OverlappingMarkerSpiderfier | null;
   private pUseServerSideClusterer = false;
-  private pGetClustersServerSide: ((bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>);
+  private pGetClustersServerSide: (bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>;
 
   constructor(build: Builder) {
     this.pMap = build.map;
@@ -178,7 +178,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
                 feature.properties.id = feature.id;
               } else {
                 feature.properties = {
-                  id: feature.id
+                  id: feature.id,
                 };
               }
             }
@@ -228,7 +228,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
         mapBounds.getSouthWest().lng(),
         mapBounds.getSouthWest().lat(),
         mapBounds.getNorthEast().lng(),
-        mapBounds.getNorthEast().lat()
+        mapBounds.getNorthEast().lat(),
       ];
       if (this.useServerSideClusterer) {
         let clusters: any[];
@@ -464,7 +464,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
       marker.set('cluster', true);
       marker.set('cluster_id', scfeature.properties.cluster_id ?? ClustererHelper.getNewId());
     } else {
-      marker.set('id', scfeature.id ?? (scfeature.properties?.id ?? ClustererHelper.getNewId()));
+      marker.set('id', scfeature.id ?? scfeature.properties?.id ?? ClustererHelper.getNewId());
       if (this.pOverlapMarkerSpiderfier) {
         this.pOverlapMarkerSpiderfier.trackMarker(marker);
       }

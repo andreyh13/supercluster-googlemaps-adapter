@@ -67,7 +67,11 @@ export class ClustererHelper {
     instances.set(map, clusterer);
   }
 
-  public static getClusterBounds(map: google.maps.Map, marker: google.maps.Marker, radius: number): google.maps.LatLngBounds {
+  public static getClusterBounds(
+    map: google.maps.Map,
+    marker: google.maps.Marker,
+    radius: number,
+  ): google.maps.LatLngBounds {
     const bounds = new google.maps.LatLngBounds();
     if (map && marker && radius) {
       const position = marker.getPosition();
@@ -99,15 +103,12 @@ export class ClustererHelper {
     const projection = map.getProjection();
     const bounds = map.getBounds();
     const nw = projection?.fromLatLngToPoint(
-      new google.maps.LatLng(
-        bounds?.getNorthEast().lat() ?? 0,
-        bounds?.getSouthWest().lng() ?? 0
-      )
+      new google.maps.LatLng(bounds?.getNorthEast().lat() ?? 0, bounds?.getSouthWest().lng() ?? 0),
     );
     const point = projection?.fromLatLngToPoint(position);
     return new google.maps.Point(
       Math.floor(((point?.x ?? 0) - (nw?.x ?? 0)) * scale),
-      Math.floor(((point?.y ?? 0) - (nw?.y ?? 0)) * scale)
+      Math.floor(((point?.y ?? 0) - (nw?.y ?? 0)) * scale),
     );
   }
 
@@ -116,15 +117,9 @@ export class ClustererHelper {
     const projection = map.getProjection();
     const bounds = map.getBounds();
     const nw = projection?.fromLatLngToPoint(
-      new google.maps.LatLng(
-        bounds?.getNorthEast().lat() ?? 0,
-        bounds?.getSouthWest().lng() ?? 0
-      )
+      new google.maps.LatLng(bounds?.getNorthEast().lat() ?? 0, bounds?.getSouthWest().lng() ?? 0),
     );
-    const point = new google.maps.Point(
-      pixel.x / scale + (nw?.x ?? 0),
-      pixel.y / scale + (nw?.y ?? 0)
-    );
+    const point = new google.maps.Point(pixel.x / scale + (nw?.x ?? 0), pixel.y / scale + (nw?.y ?? 0));
     return projection?.fromPointToLatLng(point);
   }
 }
