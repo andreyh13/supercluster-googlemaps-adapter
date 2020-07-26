@@ -28,6 +28,8 @@ export class Builder {
     feature: any,
   ) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
   private pOverlapMarkerSpiderfier: OverlappingMarkerSpiderfier | null = null;
+  private pUseServerSideClusterer: boolean = false;
+  private pGetClustersServerSide: ((bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>);
 
   constructor(map: google.maps.Map) {
     this.pMap = map;
@@ -61,6 +63,7 @@ export class Builder {
       };
       return scfeature;
     };
+    this.pGetClustersServerSide = async (bbox: GeoJSON.BBox, zoom: number) => { return []; }
   }
 
   public withRadius(radius: number): Builder {
@@ -134,6 +137,12 @@ export class Builder {
     return this;
   }
 
+  public withGetClustersServerSide(getClusters: (bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>): Builder {
+    this.pUseServerSideClusterer = true;
+    this.pGetClustersServerSide = getClusters;
+    return this;
+  }
+
   public build(): SuperClusterAdapter {
     const clusterer = new SuperClusterAdapter(this);
     ClustererHelper.setClusterer(this.pMap, clusterer);
@@ -196,5 +205,13 @@ export class Builder {
 
   get overlapMarkerSpiderfier(): OverlappingMarkerSpiderfier | null {
     return this.pOverlapMarkerSpiderfier;
+  }
+
+  get useServerSideClusterer(): boolean {
+    return this.pUseServerSideClusterer;
+  }
+
+  get getClustersServerSide(): ((bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>) {
+    return this.pGetClustersServerSide;
   }
 }

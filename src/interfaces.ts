@@ -1,5 +1,4 @@
 import * as GeoJSON from 'geojson';
-import { Builder } from './builder';
 
 export interface ISuperClusterAdapter {
   map: google.maps.Map;
@@ -22,9 +21,6 @@ export interface ISuperClusterAdapter {
   drawServerSideCalculatedClusters: (features: any[]) => void;
 }
 
-export interface ISuperClusterAdapterStatic {
-  Builder: typeof Builder;
-}
 export interface IStyle {
   url: string;
   height: number;

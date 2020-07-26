@@ -1,6 +1,6 @@
 import { Builder } from './builder';
 import { ClustererHelper } from './helper';
-import { IStyle, OverlappingMarkerSpiderfier, ISuperClusterAdapter, ISuperClusterAdapterStatic } from './interfaces';
+import { IStyle, OverlappingMarkerSpiderfier, ISuperClusterAdapter } from './interfaces';
 import { SIZES } from './constants';
 import Supercluster from 'supercluster';
 import * as GeoJSON from 'geojson';
@@ -16,7 +16,6 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   private pZoomOnClick: boolean;
   private pDataLayerDefault: google.maps.Data;
   private pMarkers: google.maps.Marker[];
-  private pZoomChangedListener: google.maps.MapsEventListener | null = null;
   private pIdleListener: google.maps.MapsEventListener | null = null;
   private pIndex: Supercluster;
   private pointFeatures: Supercluster.PointFeature<Supercluster.AnyProps>[] = [];
@@ -29,6 +28,8 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     feature: any,
   ) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
   private pOverlapMarkerSpiderfier: OverlappingMarkerSpiderfier | null;
+  private pUseServerSideClusterer: boolean = false;
+  private pGetClustersServerSide: ((bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>);
 
   constructor(build: Builder) {
     this.pMap = build.map;
@@ -53,6 +54,8 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.pServerSideFeatureToSuperCluster = build.serverSideFeatureToSuperCluster;
     this.pOverlapMarkerSpiderfier = build.overlapMarkerSpiderfier;
+    this.pUseServerSideClusterer = build.useServerSideClusterer;
+    this.pGetClustersServerSide = build.getClustersServerSide;
     this.init();
   }
 
@@ -103,6 +106,10 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
 
   get features(): Supercluster.PointFeature<Supercluster.AnyProps>[] {
     return this.pointFeatures;
+  }
+
+  get useServerSideClusterer(): boolean {
+    return this.pUseServerSideClusterer;
   }
 
   /* ---- Public methods ---- */
@@ -166,6 +173,15 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
       for (const feature of geoJson.features) {
         if (feature.type === 'Feature' && feature.geometry) {
           if (feature.geometry.type === 'Point') {
+            if (feature.id && !feature.properties?.id) {
+              if (feature.properties) {
+                feature.properties.id = feature.id;
+              } else {
+                feature.properties = {
+                  id: feature.id
+                };
+              }
+            }
             this.pointFeatures.push(feature as Supercluster.PointFeature<Supercluster.AnyProps>);
           } else {
             otherFeaturesCollection.features.push(feature);
@@ -199,7 +215,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     return Builder;
   }
 
-  private getClusters(): void {
+  private async getClusters(): Promise<void> {
     if (!this.map) {
       return;
     }
@@ -212,10 +228,20 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
         mapBounds.getSouthWest().lng(),
         mapBounds.getSouthWest().lat(),
         mapBounds.getNorthEast().lng(),
-        mapBounds.getNorthEast().lat(),
+        mapBounds.getNorthEast().lat()
       ];
-      const clusters = this.pIndex.getClusters(bbox, zoom);
-      this.drawClusters(clusters);
+      if (this.useServerSideClusterer) {
+        let clusters: any[];
+        try {
+          clusters = await this.pGetClustersServerSide(bbox, zoom);
+        } catch (err) {
+          clusters = [];
+        }
+        this.drawServerSideCalculatedClusters(clusters);
+      } else {
+        const clusters = this.pIndex.getClusters(bbox, zoom);
+        this.drawClusters(clusters);
+      }
     }
   }
 
@@ -224,6 +250,10 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     this.pDataLayerDefault.addListener('click', this.pFeatureClick);
     if (this.pFeatureStyle) {
       this.pDataLayerDefault.setStyle(this.pFeatureStyle);
+    }
+    if (this.useServerSideClusterer) {
+      this.getClusters();
+      this.addEventListeners();
     }
   }
 
@@ -244,11 +274,6 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     if (!this.map) {
       return;
     }
-    if (!this.pZoomChangedListener) {
-      this.pZoomChangedListener = google.maps.event.addListener(this.map, 'zoom_changed', () => {
-        this.getClusters();
-      });
-    }
     if (!this.pIdleListener) {
       this.pIdleListener = google.maps.event.addListener(this.map, 'idle', () => {
         this.getClusters();
@@ -257,9 +282,6 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   }
 
   private removeEventListeners(): void {
-    if (this.pZoomChangedListener) {
-      this.pZoomChangedListener.remove();
-    }
     if (this.pIdleListener) {
       this.pIdleListener.remove();
     }
@@ -281,15 +303,17 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     }
 
     // Remove the old clusters.
-    for (const oCluster of mapClusters.values()) {
-      oCluster.setMap(null);
-    }
-    for (const oMarker of mapMarkers.values()) {
-      oMarker.setMap(null);
-      if (this.pOverlapMarkerSpiderfier) {
-        this.pOverlapMarkerSpiderfier.forgetMarker(oMarker);
+    window.setTimeout(() => {
+      for (const oCluster of mapClusters.values()) {
+        oCluster.setMap(null);
       }
-    }
+      for (const oMarker of mapMarkers.values()) {
+        oMarker.setMap(null);
+        if (this.pOverlapMarkerSpiderfier) {
+          this.pOverlapMarkerSpiderfier.forgetMarker(oMarker);
+        }
+      }
+    }, 150);
   }
 
   private getClustersMap(collection: google.maps.Marker[]) {
@@ -436,13 +460,11 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     marker: google.maps.Marker,
     scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>,
   ): void {
-    if (scfeature.id) {
-      marker.set('id', scfeature.id);
-    }
     if (scfeature.properties.cluster === true) {
       marker.set('cluster', true);
-      marker.set('cluster_id', scfeature.properties.cluster_id);
+      marker.set('cluster_id', scfeature.properties.cluster_id ?? ClustererHelper.getNewId());
     } else {
+      marker.set('id', scfeature.id ?? (scfeature.properties?.id ?? ClustererHelper.getNewId()));
       if (this.pOverlapMarkerSpiderfier) {
         this.pOverlapMarkerSpiderfier.trackMarker(marker);
       }
@@ -456,12 +478,19 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
         if (marker.get('cluster') === true) {
           event.stop();
           const evPos = event.latLng;
-          const clusterId: number = marker.get('cluster_id') as number;
-          const zoom = this.pIndex.getClusterExpansionZoom(clusterId);
-          this.map.setOptions({
-            center: evPos,
-            zoom,
-          });
+          if (!this.useServerSideClusterer && this.features.length) {
+            const clusterId: number = marker.get('cluster_id') as number;
+            const zoom = this.pIndex.getClusterExpansionZoom(clusterId);
+            this.map.setOptions({
+              center: evPos,
+              zoom,
+            });
+          } else {
+            const bounds = ClustererHelper.getClusterBounds(this.map, marker, this.radius);
+            if (!bounds.isEmpty()) {
+              this.map.fitBounds(bounds, 5);
+            }
+          }
         } else {
           this.pMarkerClick(marker, event);
         }

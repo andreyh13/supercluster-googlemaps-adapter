@@ -8,6 +8,8 @@ const hashFeaturesBounds: Map<string | number, google.maps.LatLngBounds> = new M
 const instances: WeakMap<google.maps.Map, SuperClusterAdapter> = new WeakMap();
 
 export class ClustererHelper {
+  private static newId: number = 1;
+
   public static featureCenter(feature: google.maps.Data.Feature): google.maps.LatLng {
     if (!hashFeatureCenters.has(feature.getId())) {
       const geom = feature.getGeometry();
@@ -63,5 +65,66 @@ export class ClustererHelper {
       instances.delete(map);
     }
     instances.set(map, clusterer);
+  }
+
+  public static getClusterBounds(map: google.maps.Map, marker: google.maps.Marker, radius: number): google.maps.LatLngBounds {
+    const bounds = new google.maps.LatLngBounds();
+    if (map && marker && radius) {
+      const position = marker.getPosition();
+      if (position) {
+        const point = ClustererHelper.fromLatLngToPixel(position, map);
+        if (point) {
+          const swPoint = new google.maps.Point(point.x - radius, point.y - radius);
+          const nePoint = new google.maps.Point(point.x + radius, point.y + radius);
+          const sw = ClustererHelper.fromPixelToLatLng(swPoint, map);
+          const ne = ClustererHelper.fromPixelToLatLng(nePoint, map);
+          if (sw) {
+            bounds.extend(sw);
+          }
+          if (ne) {
+            bounds.extend(ne);
+          }
+        }
+      }
+    }
+    return bounds;
+  }
+
+  public static getNewId(): number {
+    return ++ClustererHelper.newId;
+  }
+
+  private static fromLatLngToPixel(position: google.maps.LatLng, map: google.maps.Map) {
+    const scale = Math.pow(2, map.getZoom());
+    const projection = map.getProjection();
+    const bounds = map.getBounds();
+    const nw = projection?.fromLatLngToPoint(
+      new google.maps.LatLng(
+        bounds?.getNorthEast().lat() ?? 0,
+        bounds?.getSouthWest().lng() ?? 0
+      )
+    );
+    const point = projection?.fromLatLngToPoint(position);
+    return new google.maps.Point(
+      Math.floor(((point?.x ?? 0) - (nw?.x ?? 0)) * scale),
+      Math.floor(((point?.y ?? 0) - (nw?.y ?? 0)) * scale)
+    );
+  }
+
+  private static fromPixelToLatLng(pixel: google.maps.Point, map: google.maps.Map) {
+    const scale = Math.pow(2, map.getZoom());
+    const projection = map.getProjection();
+    const bounds = map.getBounds();
+    const nw = projection?.fromLatLngToPoint(
+      new google.maps.LatLng(
+        bounds?.getNorthEast().lat() ?? 0,
+        bounds?.getSouthWest().lng() ?? 0
+      )
+    );
+    const point = new google.maps.Point(
+      pixel.x / scale + (nw?.x ?? 0),
+      pixel.y / scale + (nw?.y ?? 0)
+    );
+    return projection?.fromPointToLatLng(point);
   }
 }

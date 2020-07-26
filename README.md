@@ -248,6 +248,40 @@ E.g.
 
 Please note that for clusters you have to define mandatory properties `cluster, cluster_id, point_count, point_count_abbreviated`. The feature that you return is a GeoJSON [Feature][feature] with [Point][point] geometry.
 
+#### withGetClustersServerSide(getClusters: (bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>)
+
+In certain situations you are probably prefer to hand off cluster calculation to server side code. For example, you can implement server side calculation with [JavaSuperCluster](https://github.com/utahemre/JavaSuperCluster) or some similar library.
+
+In this case you can define an asynchronous callback function that will retrieve clusters from the backend and return an array of clusters and markers. Internally it will use a transformation function that you defined in the `withServerSideFeatureToSuperCluster()` method to convert your items into GeoJSON [feature][feature] of the supercluster library.
+
+The callback function will receive two parameters. The first one is the bounding box where we want calculate clusters as a GeoJSON [bounding box][bbox] array. The second parameter is a zoom level of the map.
+
+E.g.
+
+    const clusterer = new Clusterer.Builder(map)
+        .withServerSideFeatureToSuperCluster(itemToSuperclusterFeature)
+        .withGetClustersServerSide(async (bbox, zoom) => {
+            let features;
+            const query = `{"bounds":{"west":${bbox[0]},"south":${bbox[1]},"east":${bbox[2]},"north":${bbox[3]}}, "zoom":${zoom}}`;
+            try {
+              const response = await fetch(url + encodeURIComponent(query));
+              if (response.ok) {
+                const featureCollection = await response.json();
+                features = featureCollection.features;
+              } else {
+                console.log(`Cannot fetch server side clusters data for this example ${response.statusText}`);
+                features = [];
+              }
+            } catch (err) {
+              console.log(`Cannot fetch server side clusters data for this example ${err}`);
+              features = [];
+            }
+            return features;
+        })
+        .build();
+
+Please note that if you defined the callback function using `withGetClustersServerSide()` there is no need to call `drawServerSideCalculatedClusters(features: any[])` anymore. It will be called automatically.
+
 #### withOverlapMarkerSpiderfier(oms: OverlappingMarkerSpiderfier)
 
 The Supercluster adapter can be used in conjunction with the [Overlapping Marker Spiderfier](https://github.com/jawj/OverlappingMarkerSpiderfier).
@@ -305,6 +339,12 @@ E.g.
       console.log("Cannot fetch data for this example");
     });
 
+Do not use this method if you defined the `withGetClustersServerSide()` callback. The typical scenario when you might need the `drawServerSideCalculatedClusters()` is the following:
+
+- You retrieve clusters from you backend on initial map load and draw clusters with this method
+- You simultaneously retrieve a complete GeoJSON [collection][feature-collection] of all items and call `load()` method
+- Once all features are loaded into supercluster adapter the further processing is completely client side and you don't need any server side call anymore.
+
 ### Other public methods available on clusterer object
 
 #### setVisible(v: boolean)
@@ -347,6 +387,7 @@ The source code of this library is licensed under the MIT License.
 [feature-collection]: https://tools.ietf.org/html/rfc7946#section-3.3
 [feature]: https://tools.ietf.org/html/rfc7946#section-3.2
 [point]: https://tools.ietf.org/html/rfc7946#section-3.1.2
+[bbox]: https://tools.ietf.org/html/rfc7946#section-5
 [marker]: https://developers.google.com/maps/documentation/javascript/reference/marker#Marker
 [mouseevent]: https://developers.google.com/maps/documentation/javascript/reference/map#MouseEvent
 [info-window]: https://developers.google.com/maps/documentation/javascript/reference/info-window
