@@ -8,8 +8,8 @@ const config = {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
         exclude: /node_modules/,
+        loaders: ['babel-loader', 'ts-loader']
       },
       {
         test: /\.(png|svg|jpg|gif)$/,
