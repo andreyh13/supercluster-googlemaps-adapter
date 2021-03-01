@@ -20,7 +20,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   private pIndex: Supercluster;
   private pointFeatures: Supercluster.PointFeature<Supercluster.AnyProps>[] = [];
   private pNonPointFeatures: google.maps.Data.Feature[] = [];
-  private pCustomMarkerIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string;
+  private pCustomMarkerIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string | google.maps.Symbol;
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pFeatureStyle: google.maps.Data.StylingFunction;
@@ -442,14 +442,22 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   private getMarkerOptionsForPoint(
     scfeature: Supercluster.PointFeature<Supercluster.AnyProps>,
   ): google.maps.MarkerOptions {
+    let mIcon: google.maps.Icon | google.maps.Symbol;
+    const customMarkerObject = this.pCustomMarkerIcon(scfeature);
+    if (typeof customMarkerObject === "string") {
+      mIcon = {
+        scaledSize: new google.maps.Size(32, 32),
+        url: customMarkerObject,
+      };
+    } else {
+      mIcon = customMarkerObject;
+    }
+
     const options: google.maps.MarkerOptions = {
       position: new google.maps.LatLng(scfeature.geometry.coordinates[1], scfeature.geometry.coordinates[0]),
       map: this.map,
       clickable: true,
-      icon: {
-        scaledSize: new google.maps.Size(32, 32),
-        url: this.pCustomMarkerIcon(scfeature),
-      },
+      icon: mIcon,
       title: (scfeature.properties.name as string) ?? '',
       visible: true,
     };

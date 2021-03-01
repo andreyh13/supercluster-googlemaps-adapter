@@ -133,9 +133,9 @@ Specifies extension of cluster images
 
 Specifies if map should zoom in after clicking the cluster icon. Default: true.
 
-#### withCustomMarkerIcon(customIcon: (pointFeature: GeoJSON.Feature<GeoJSON.Point>) => string)
+#### withCustomMarkerIcon(customIcon: (pointFeature: GeoJSON.Feature<GeoJSON.Point>) => string | google.maps.Symbol)
 
-You can specify a callback function that will be used to set a custom icon on individual markers that are not clusterized. This function receives a GeoJSON [Feature][feature] with a [Point][point] geometry, it should return the URL that represents a marker icon.
+You can specify a callback function that will be used to set a custom icon on individual markers that are not clusterized. This function receives a GeoJSON [Feature][feature] with a [Point][point] geometry, it should return the URL that represents a marker icon or [Symbol][symbol] object of Google Maps JavaScript API.
 
 E.g.
 
@@ -393,3 +393,4 @@ The source code of this library is licensed under the MIT License.
 [info-window]: https://developers.google.com/maps/documentation/javascript/reference/info-window
 [data-mouseevent]: https://developers.google.com/maps/documentation/javascript/reference/data#Data.MouseEvent
 [styling-function]: https://developers.google.com/maps/documentation/javascript/reference/data#Data.StylingFunction
+[symbol]: https://developers.google.com/maps/documentation/javascript/reference/marker#Symbol

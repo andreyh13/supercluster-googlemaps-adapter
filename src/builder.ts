@@ -20,7 +20,7 @@ export class Builder {
   private pImagePath: string = MARKER_CLUSTER_IMAGE_PATH_DEFAULT;
   private pImageExtension: string = MARKER_CLUSTER_IMAGE_EXTENSION;
   private pZoomOnClick = true;
-  private pCustomMarkerIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string;
+  private pCustomMarkerIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string | google.maps.Symbol;
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pFeatureStyle: google.maps.Data.StylingFunction;
@@ -105,9 +105,9 @@ export class Builder {
   }
 
   public withCustomMarkerIcon(
-    customIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string,
+    customIcon: (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string | google.maps.Symbol,
   ): Builder {
-    this.pCustomMarkerIcon = customIcon as (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string;
+    this.pCustomMarkerIcon = customIcon as (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string | google.maps.Symbol;
     return this;
   }
 
@@ -184,7 +184,7 @@ export class Builder {
     return this.pZoomOnClick ?? true;
   }
 
-  get customMarkerIcon(): (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string {
+  get customMarkerIcon(): (pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>) => string | google.maps.Symbol {
     return this.pCustomMarkerIcon;
   }
 
