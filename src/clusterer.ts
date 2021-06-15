@@ -353,10 +353,13 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
       if (scfeature.properties.id && existingMarkers.has(scfeature.properties.id)) {
         res = existingMarkers.get(scfeature.properties.id);
         existingMarkers.delete(scfeature.properties.id);
-        if (res?.getPosition()?.lat()!==scfeature.geometry.coordinates[1] || res?.getPosition()?.lng()!==scfeature.geometry.coordinates[0]) {
+        if (
+          res?.getPosition()?.lat() !== scfeature.geometry.coordinates[1] ||
+          res?.getPosition()?.lng() !== scfeature.geometry.coordinates[0]
+        ) {
           res?.setPosition({
             lat: scfeature.geometry.coordinates[1],
-            lng: scfeature.geometry.coordinates[0]
+            lng: scfeature.geometry.coordinates[0],
           });
         }
       }
