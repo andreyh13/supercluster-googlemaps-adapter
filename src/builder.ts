@@ -23,6 +23,14 @@ export class Builder {
   private pCustomMarkerIcon: (
     pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>,
   ) => string | google.maps.Symbol;
+  private pCustomClusterIcon: (
+    clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>,
+    clusterIndex: number,
+  ) => google.maps.Icon | google.maps.Symbol | null;
+  private pUpdateMarkerOptions: (
+    scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>,
+    marker: google.maps.Marker,
+  ) => google.maps.MarkerOptions | null;
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pFeatureStyle: google.maps.Data.StylingFunction;
@@ -41,6 +49,8 @@ export class Builder {
       }
       return ICON_URL_DEFAULT;
     };
+    this.pCustomClusterIcon = (clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>, clusterIndex: number) => null;
+    this.pUpdateMarkerOptions = (scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>, marker: google.maps.Marker) => null;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     this.pMarkerClick = (marker: google.maps.Marker, event: google.maps.MouseEvent) => {
       return;
@@ -112,6 +122,26 @@ export class Builder {
     this.pCustomMarkerIcon = customIcon as (
       pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>,
     ) => string | google.maps.Symbol;
+    return this;
+  }
+
+  public withCustomClusterIcon(
+    customIcon: (clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>, clusterIndex: number) => google.maps.Icon | google.maps.Symbol | null
+  ): Builder {
+    this.pCustomClusterIcon = customIcon as (
+      clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>,
+      clusterIndex: number,
+    ) => google.maps.Icon | google.maps.Symbol | null;
+    return this;
+  }
+
+  public withUpdateMarkerOptions(
+    updateMarkerOptions: (scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>, marker: google.maps.Marker) => google.maps.MarkerOptions | null
+  ): Builder {
+    this.pUpdateMarkerOptions = updateMarkerOptions as (
+      scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>,
+      marker: google.maps.Marker,
+    ) => google.maps.MarkerOptions | null;
     return this;
   }
 
@@ -192,6 +222,20 @@ export class Builder {
     pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>,
   ) => string | google.maps.Symbol {
     return this.pCustomMarkerIcon;
+  }
+
+  get customClusterIcon(): (
+    clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>,
+    clusterIndex: number,
+  ) => google.maps.Icon | google.maps.Symbol | null {
+    return this.pCustomClusterIcon;
+  }
+
+  get updateMarkerOptions(): (
+    scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>,
+    marker: google.maps.Marker,
+  ) => google.maps.MarkerOptions | null {
+    return this.pUpdateMarkerOptions;
   }
 
   get markerClick(): (marker: google.maps.Marker, event: google.maps.MouseEvent) => void {

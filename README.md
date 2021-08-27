@@ -106,6 +106,14 @@ Minimum zoom level at which clusters are generated. Default: 0.
 
 Defines styles for clusters such as images, fonts or text colors.
 
+Note: the 0-index array element is used to define default style. The clusterer will use elements with indexes from 1 to 5. There is the following meaning of the indexes:
+
+- 1 (cluster up to 10 items)
+- 2 (cluster of 10-100 items)
+- 3 (cluster of 100-1000 items)
+- 4 (cluster of 1000-10000 items)
+- 5 (cluster with more tham 10000 items)
+
 ##### Interface IStyle
 
 This interface is used to style the cluster's icons. There is default implementation of styles, but you can override it applying array of styles in Builder object
@@ -149,6 +157,93 @@ E.g.
 
     const clusterer = new Clusterer.Builder(map)
         .withCustomMarkerIcon(customMarkerIcon)
+        .build();
+
+#### withCustomClusterIcon(customIcon: (clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>, clusterIndex: number) => google.maps.Icon | google.maps.Symbol | null)
+
+You can define a callback function that will be used to set a custom icon for an individual cluster. This function has priority over static cluster images that you can define using a styles array. This function receives a GeoJSON cluster [Feature][feature] with a [Point][point] geometry and corresponding cluster properties and clusterIndex value that describes how many items the cluster contains. It should return an [Icon][icon] object or [Symbol][symbol] object of Google Maps JavaScript API. Alternatively, you can return null value that means you will fallback to the default cluster icon defined in styles.
+
+The clusterIndex supports the following values
+
+- 1 (cluster up to 10 items)
+- 2 (cluster of 10-100 items)
+- 3 (cluster of 100-1000 items)
+- 4 (cluster of 1000-10000 items)
+- 5 (cluster with more tham 10000 items)
+
+E.g.
+
+    function customClusterIcon(feature, index) {
+      let color;
+      let scale;
+      switch (index) {
+        case 1:
+          color = YELLOW;
+          scale = SCALE.small;
+          break;
+        case 2:
+          color = GREEN;
+          scale = SCALE.medium;
+          break;
+        case 3:
+          color = BLUE;
+          scale = SCALE.big;
+          break;
+        case 4:
+          color = RED;
+          scale = SCALE.huge;
+          break;
+        default:
+          color = GREY;
+          scale = SCALE.small;
+          break;
+      }
+      return {
+        path: CLUSTER_PATH,
+        fillColor: color.fillColor,
+        fillOpacity: 1,
+        strokeColor: color.strokeColor,
+        strokeOpacity: 1,
+        strokeWeight: 13,
+        scale: scale,
+        anchor: new google.maps.Point(70, 70),
+        labelOrigin: new google.maps.Point(74, 74)
+      };
+    }
+
+    const clusterer = new Clusterer.Builder(map)
+        .withCustomClusterIcon(customClusterIcon)
+        .build();
+
+#### withUpdateMarkerOptions(updateMarkerOptions: (scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>, marker: google.maps.Marker) => google.maps.MarkerOptions | null)
+
+Sometimes you need update certain properties of existing markers, for example change icon color or zIndex. This callback function is used to update marker options. This function receives a GeoJSON [Feature][feature] of cluster or marker with a [Point][point] geometry and corresponding properties and a [Marker][marker] object of Google Maps JavaScript API. It should return a [Marker options][markeroptions] object that will be applied to existing marker. Alternatively, you can return null value in order to avoid marker options update.
+
+E.g.
+
+    function updateMarkerOptions(feature, marker) {
+      function randomColor() {
+        var arr = [GREEN, RED, BLUE, YELLOW, BROWN, GREY];
+        var rand = Math.floor(Math.random()*(arr.length-1));
+        return arr[rand];
+      }
+
+      var color = randomColor();
+      var markerIcon = marker.getIcon();
+
+      if (feature.properties.cluster === true) {
+        markerIcon.fillColor = color.fillColor;
+        markerIcon.strokeColor = color.strokeColor;
+      } else {
+        markerIcon.fillColor = color.fillColor;
+      }
+      return {
+        icon: markerIcon
+      };
+    }
+
+    const clusterer = new Clusterer.Builder(map)
+        .withUpdateMarkerOptions(updateMarkerOptions)
         .build();
 
 #### withMarkerClick(markerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void)
@@ -373,6 +468,10 @@ The live demo is available at https://maps-tools-242a6.firebaseapp.com/clusterer
 
 The demo that demonstrates usage of server side clustering and draw clusters can be found at https://maps-tools-242a6.firebaseapp.com/clusterer/demos/superclusterwithserverside.html
 
+The demo that demonstrates usage of custom cluster icons can be found at https://maps-tools-242a6.firebaseapp.com/clusterer/demos/superclusterwithserversideandcustomclusters.html
+
+The demo that demonstartes usage of marker properties updates can be fount at https://maps-tools-242a6.firebaseapp.com/clusterer/demos/superclusterwithserversideandupdateproperties.html
+
 Stackblitz samples:
 
 - [JavaScript](https://stackblitz.com/edit/js-qcam3s)
@@ -394,3 +493,5 @@ The source code of this library is licensed under the MIT License.
 [data-mouseevent]: https://developers.google.com/maps/documentation/javascript/reference/data#Data.MouseEvent
 [styling-function]: https://developers.google.com/maps/documentation/javascript/reference/data#Data.StylingFunction
 [symbol]: https://developers.google.com/maps/documentation/javascript/reference/marker#Symbol
+[icon]: https://developers.google.com/maps/documentation/javascript/reference/marker#Icon
+[markeroptions]: https://developers.google.com/maps/documentation/javascript/reference/marker#MarkerOptions

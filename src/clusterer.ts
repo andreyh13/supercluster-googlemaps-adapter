@@ -23,6 +23,14 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   private pCustomMarkerIcon: (
     pointFeature: Supercluster.PointFeature<Supercluster.AnyProps>,
   ) => string | google.maps.Symbol;
+  private pCustomClusterIcon: (
+    clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>,
+    clusterIndex: number,
+  ) => google.maps.Icon | google.maps.Symbol | null;
+  private pUpdateMarkerOptions: (
+    scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>,
+    marker: google.maps.Marker
+  ) => google.maps.MarkerOptions | null;
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pFeatureStyle: google.maps.Data.StylingFunction;
@@ -50,6 +58,8 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
       radius: this.pRadius,
     });
     this.pCustomMarkerIcon = build.customMarkerIcon;
+    this.pCustomClusterIcon = build.customClusterIcon;
+    this.pUpdateMarkerOptions = build.updateMarkerOptions;
     this.pMarkerClick = build.markerClick;
     this.pFeatureClick = build.featureClick;
     this.pFeatureStyle = build.featureStyle;
@@ -300,6 +310,11 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
       let marker = this.findExistingMarkerInstance(scfeature, mapClusters, mapMarkers);
       if (!marker) {
         marker = this.superclusterFeatureToGmapsMarker(scfeature);
+      } else {
+        const options = this.pUpdateMarkerOptions(scfeature, marker);
+        if (options !== null) {
+          marker.setOptions(options);
+        }
       }
       this.pMarkers.push(marker);
     }
@@ -412,19 +427,23 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     return options;
   }
 
-  private getClusterIcon(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>): google.maps.Icon {
+  private getClusterIcon(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>): google.maps.Icon | google.maps.Symbol {
     const index = this.getClusterIconIndex(scfeature);
-    const style: IStyle = this.styles[index];
-    const width = style?.width ?? SIZES[0];
-    const height = style?.height ?? SIZES[0];
-    const anchorX = style?.anchor?.length ? style.anchor[0] : width / 2;
-    const anchorY = style?.anchor && style?.anchor.length > 1 ? style.anchor[1] : height / 2;
-    const icon = {
-      scaledSize: new google.maps.Size(width, height),
-      anchor: new google.maps.Point(anchorX, anchorY),
-      url: style.url,
-    };
-    return icon;
+    const customIcon = this.pCustomClusterIcon(scfeature, index);
+    if (customIcon === null) {
+      const style: IStyle = this.styles[index];
+      const width = style?.width ?? SIZES[0];
+      const height = style?.height ?? SIZES[0];
+      const anchorX = style?.anchor?.length ? style.anchor[0] : width / 2;
+      const anchorY = style?.anchor && style?.anchor.length > 1 ? style.anchor[1] : height / 2;
+      const icon = {
+        scaledSize: new google.maps.Size(width, height),
+        anchor: new google.maps.Point(anchorX, anchorY),
+        url: style.url,
+      };
+      return icon;
+    }
+    return customIcon;
   }
 
   private getClusterIconIndex(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>): number {
