@@ -29,7 +29,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   ) => google.maps.Icon | google.maps.Symbol | null;
   private pUpdateMarkerOptions: (
     scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>,
-    marker: google.maps.Marker
+    marker: google.maps.Marker,
   ) => google.maps.MarkerOptions | null;
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
@@ -427,7 +427,9 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     return options;
   }
 
-  private getClusterIcon(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>): google.maps.Icon | google.maps.Symbol {
+  private getClusterIcon(
+    scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>,
+  ): google.maps.Icon | google.maps.Symbol {
     const index = this.getClusterIconIndex(scfeature);
     const customIcon = this.pCustomClusterIcon(scfeature, index);
     if (customIcon === null) {

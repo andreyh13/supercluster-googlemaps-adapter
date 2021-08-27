@@ -49,8 +49,14 @@ export class Builder {
       }
       return ICON_URL_DEFAULT;
     };
-    this.pCustomClusterIcon = (clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>, clusterIndex: number) => null;
-    this.pUpdateMarkerOptions = (scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>, marker: google.maps.Marker) => null;
+    this.pCustomClusterIcon = (
+      clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>,
+      clusterIndex: number,
+    ) => null;
+    this.pUpdateMarkerOptions = (
+      scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>,
+      marker: google.maps.Marker,
+    ) => null;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     this.pMarkerClick = (marker: google.maps.Marker, event: google.maps.MouseEvent) => {
       return;
@@ -126,7 +132,10 @@ export class Builder {
   }
 
   public withCustomClusterIcon(
-    customIcon: (clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>, clusterIndex: number) => google.maps.Icon | google.maps.Symbol | null
+    customIcon: (
+      clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>,
+      clusterIndex: number,
+    ) => google.maps.Icon | google.maps.Symbol | null,
   ): Builder {
     this.pCustomClusterIcon = customIcon as (
       clusterFeature: Supercluster.ClusterFeature<Supercluster.AnyProps>,
@@ -136,7 +145,10 @@ export class Builder {
   }
 
   public withUpdateMarkerOptions(
-    updateMarkerOptions: (scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>, marker: google.maps.Marker) => google.maps.MarkerOptions | null
+    updateMarkerOptions: (
+      scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>,
+      marker: google.maps.Marker,
+    ) => google.maps.MarkerOptions | null,
   ): Builder {
     this.pUpdateMarkerOptions = updateMarkerOptions as (
       scfeature: Supercluster.PointFeature<Supercluster.AnyProps> | Supercluster.ClusterFeature<Supercluster.AnyProps>,
