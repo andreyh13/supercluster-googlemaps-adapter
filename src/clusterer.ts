@@ -34,7 +34,12 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pClusterClick:
-    | ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map, clusterer: SuperClusterAdapter) => void)
+    | ((
+        marker: google.maps.Marker,
+        event: google.maps.MouseEvent,
+        mapInstance: google.maps.Map,
+        clusterer: SuperClusterAdapter,
+      ) => void)
     | undefined;
   private pFeatureStyle: google.maps.Data.StylingFunction;
   private pServerSideFeatureToSuperCluster: (
