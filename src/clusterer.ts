@@ -505,6 +505,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     if (scfeature.properties.cluster === true) {
       marker.set('cluster', true);
       marker.set('cluster_id', scfeature.properties.cluster_id ?? ClustererHelper.getNewId());
+      marker.set('clusterHashCode', scfeature.properties.clusterHashCode ?? '');
     } else {
       marker.set('id', scfeature.properties?.id ?? scfeature.id ?? ClustererHelper.getNewId());
       if (this.pOverlapMarkerSpiderfier) {
