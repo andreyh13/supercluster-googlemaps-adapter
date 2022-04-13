@@ -33,7 +33,9 @@ export class Builder {
   ) => google.maps.MarkerOptions | null;
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
-  private pClusterClick: ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void) | undefined;
+  private pClusterClick:
+    | ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void)
+    | undefined;
   private pFeatureStyle: google.maps.Data.StylingFunction;
   private pServerSideFeatureToSuperCluster: (
     feature: any,
@@ -169,7 +171,9 @@ export class Builder {
     return this;
   }
 
-  public withClusterClick(clusterClick: (marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void): Builder {
+  public withClusterClick(
+    clusterClick: (marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void,
+  ): Builder {
     this.pClusterClick = clusterClick;
     return this;
   }
@@ -193,7 +197,9 @@ export class Builder {
     return this;
   }
 
-  public withGetClustersServerSide(getClusters: (bbox: GeoJSON.BBox, zoom: number, clusterToZoom?: string) => Promise<any[]>): Builder {
+  public withGetClustersServerSide(
+    getClusters: (bbox: GeoJSON.BBox, zoom: number, clusterToZoom?: string) => Promise<any[]>,
+  ): Builder {
     this.pUseServerSideClusterer = true;
     this.pGetClustersServerSide = getClusters;
     return this;
@@ -265,7 +271,9 @@ export class Builder {
     return this.pFeatureClick;
   }
 
-  get clusterClick(): ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void) | undefined {
+  get clusterClick():
+    | ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void)
+    | undefined {
     return this.pClusterClick;
   }
 
