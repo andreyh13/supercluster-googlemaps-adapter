@@ -33,13 +33,14 @@ export class Builder {
   ) => google.maps.MarkerOptions | null;
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
+  private pClusterClick: ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void) | undefined;
   private pFeatureStyle: google.maps.Data.StylingFunction;
   private pServerSideFeatureToSuperCluster: (
     feature: any,
   ) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
   private pOverlapMarkerSpiderfier: OverlappingMarkerSpiderfier | null = null;
   private pUseServerSideClusterer = false;
-  private pGetClustersServerSide: (bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>;
+  private pGetClustersServerSide: (bbox: GeoJSON.BBox, zoom: number, clusterToZoom?: string) => Promise<any[]>;
 
   constructor(map: google.maps.Map) {
     this.pMap = map;
@@ -65,6 +66,7 @@ export class Builder {
     this.pFeatureClick = (event: google.maps.Data.MouseEvent) => {
       return;
     };
+    this.pClusterClick = undefined;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     this.pFeatureStyle = (feature: google.maps.Data.Feature) => {
       return Object.create(null) as google.maps.Data.StyleOptions;
@@ -82,7 +84,7 @@ export class Builder {
       return scfeature;
     };
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/require-await
-    this.pGetClustersServerSide = async (bbox: GeoJSON.BBox, zoom: number) => {
+    this.pGetClustersServerSide = async (bbox: GeoJSON.BBox, zoom: number, clusterToZoom?: string) => {
       return [];
     };
   }
@@ -167,6 +169,11 @@ export class Builder {
     return this;
   }
 
+  public withClusterClick(clusterClick: (marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void): Builder {
+    this.pClusterClick = clusterClick;
+    return this;
+  }
+
   public withFeatureStyle(featureStyle: google.maps.Data.StylingFunction): Builder {
     this.pFeatureStyle = featureStyle;
     return this;
@@ -186,7 +193,7 @@ export class Builder {
     return this;
   }
 
-  public withGetClustersServerSide(getClusters: (bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>): Builder {
+  public withGetClustersServerSide(getClusters: (bbox: GeoJSON.BBox, zoom: number, clusterToZoom?: string) => Promise<any[]>): Builder {
     this.pUseServerSideClusterer = true;
     this.pGetClustersServerSide = getClusters;
     return this;
@@ -256,6 +263,10 @@ export class Builder {
 
   get featureClick(): (event: google.maps.Data.MouseEvent) => void {
     return this.pFeatureClick;
+  }
+
+  get clusterClick(): ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void) | undefined {
+    return this.pClusterClick;
   }
 
   get featureStyle(): google.maps.Data.StylingFunction {

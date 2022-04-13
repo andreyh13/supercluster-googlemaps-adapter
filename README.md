@@ -314,6 +314,27 @@ const clusterer = new Clusterer.Builder(map)
     .build();
 ```
 
+#### withClusterClick(clusterClick: (marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void)
+
+You can define a callback function to respond the click events on cluster markers. This function receives three parameters. The first is the Google Maps [Marker][marker], the second is Google Maps [MouseEvent][mouseevent] and the third is Google [Map][map] instance. It might be useful to implerments logic that splits the cluster and zooms the map.
+
+E.g.
+
+```js
+function onClusterClick(marker, event, map) {
+  const clusterId = marker.get('cluster_id');
+  const zoom = getClusterExpansionZoom(clusterId);
+  map.setOptions({
+    center: event.latLng,
+    zoom,
+  });
+}
+
+const clusterer = new Clusterer.Builder(map)
+    .withClusterClick(onClusterClick)
+    .build();
+```
+
 #### withFeatureStyle(featureStyle: google.maps.Data.StylingFunction)
 
 You can define a [Styling Function][styling-function] for non-point features handled by Google Maps Data Layer.
@@ -537,3 +558,4 @@ The source code of this library is licensed under the MIT License.
 [symbol]: https://developers.google.com/maps/documentation/javascript/reference/marker#Symbol
 [icon]: https://developers.google.com/maps/documentation/javascript/reference/marker#Icon
 [markeroptions]: https://developers.google.com/maps/documentation/javascript/reference/marker#MarkerOptions
+[map]: https://developers.google.com/maps/documentation/javascript/reference/map#Map

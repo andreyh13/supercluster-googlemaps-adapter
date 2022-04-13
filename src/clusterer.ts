@@ -33,13 +33,14 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   ) => google.maps.MarkerOptions | null;
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
+  private pClusterClick: ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void) | undefined;
   private pFeatureStyle: google.maps.Data.StylingFunction;
   private pServerSideFeatureToSuperCluster: (
     feature: any,
   ) => Supercluster.ClusterFeature<Supercluster.AnyProps> | Supercluster.PointFeature<Supercluster.AnyProps>;
   private pOverlapMarkerSpiderfier: OverlappingMarkerSpiderfier | null;
   private pUseServerSideClusterer = false;
-  private pGetClustersServerSide: (bbox: GeoJSON.BBox, zoom: number) => Promise<any[]>;
+  private pGetClustersServerSide: (bbox: GeoJSON.BBox, zoom: number, clusterToZoom?: string) => Promise<any[]>;
 
   constructor(build: Builder) {
     this.pMap = build.map;
@@ -62,6 +63,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
     this.pUpdateMarkerOptions = build.updateMarkerOptions;
     this.pMarkerClick = build.markerClick;
     this.pFeatureClick = build.featureClick;
+    this.pClusterClick = build.clusterClick;
     this.pFeatureStyle = build.featureStyle;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.pServerSideFeatureToSuperCluster = build.serverSideFeatureToSuperCluster;
@@ -438,12 +440,11 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
       const height = style?.height ?? SIZES[0];
       const anchorX = style?.anchor?.length ? style.anchor[0] : width / 2;
       const anchorY = style?.anchor && style?.anchor.length > 1 ? style.anchor[1] : height / 2;
-      const icon = {
+      return {
         scaledSize: new google.maps.Size(width, height),
         anchor: new google.maps.Point(anchorX, anchorY),
         url: style.url,
       };
-      return icon;
     }
     return customIcon;
   }
@@ -461,14 +462,13 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   private getClusterLabel(scfeature: Supercluster.ClusterFeature<Supercluster.AnyProps>): google.maps.MarkerLabel {
     const index = this.getClusterIconIndex(scfeature);
     const style: IStyle = this.styles[index];
-    const label = {
+    return {
       color: style?.textColor ?? 'black',
       fontFamily: style?.fontFamily ?? 'Roboto',
       fontSize: `${style?.textSize ?? 14}px`,
       fontWeight: style?.fontWeight ?? 'normal',
       text: `${scfeature.properties.point_count_abbreviated}`,
     };
-    return label;
   }
 
   private getMarkerOptionsForPoint(
@@ -526,9 +526,13 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
               zoom,
             });
           } else {
-            const bounds = ClustererHelper.getClusterBounds(this.map, marker, this.radius);
-            if (!bounds.isEmpty()) {
-              this.map.fitBounds(bounds, 5);
+            if (this.useServerSideClusterer && this.pClusterClick) {
+              this.pClusterClick(marker, event, this.map);
+            } else {
+              const bounds = ClustererHelper.getClusterBounds(this.map, marker, this.radius);
+              if (!bounds.isEmpty()) {
+                this.map.fitBounds(bounds, 5);
+              }
             }
           }
         } else {
