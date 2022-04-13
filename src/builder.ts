@@ -34,7 +34,7 @@ export class Builder {
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pClusterClick:
-    | ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void)
+    | ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map, clusterer: SuperClusterAdapter) => void)
     | undefined;
   private pFeatureStyle: google.maps.Data.StylingFunction;
   private pServerSideFeatureToSuperCluster: (
@@ -172,7 +172,7 @@ export class Builder {
   }
 
   public withClusterClick(
-    clusterClick: (marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void,
+    clusterClick: (marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map, clusterer: SuperClusterAdapter) => void,
   ): Builder {
     this.pClusterClick = clusterClick;
     return this;
@@ -272,7 +272,7 @@ export class Builder {
   }
 
   get clusterClick():
-    | ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void)
+    | ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map, clusterer: SuperClusterAdapter) => void)
     | undefined {
     return this.pClusterClick;
   }

@@ -314,14 +314,14 @@ const clusterer = new Clusterer.Builder(map)
     .build();
 ```
 
-#### withClusterClick(clusterClick: (marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void)
+#### withClusterClick(clusterClick: (marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map, clusterer: SuperClusterAdapter) => void)
 
-You can define a callback function to respond the click events on cluster markers. This function receives three parameters. The first is the Google Maps [Marker][marker], the second is Google Maps [MouseEvent][mouseevent] and the third is Google [Map][map] instance. It might be useful to implerments logic that splits the cluster and zooms the map.
+You can define a callback function to respond the click events on cluster markers. This function receives four parameters. The first is the Google Maps [Marker][marker], the second is Google Maps [MouseEvent][mouseevent], the third is Google [Map][map] instance and the fourth is a clusterer instance. It might be useful to implerment logic that splits the cluster and zooms the map.
 
 E.g.
 
 ```js
-function onClusterClick(marker, event, map) {
+function onClusterClick(marker, event, map, clusterer) {
   const clusterId = marker.get('cluster_id');
   const zoom = getClusterExpansionZoom(clusterId);
   map.setOptions({

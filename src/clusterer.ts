@@ -34,7 +34,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
   private pMarkerClick: (marker: google.maps.Marker, event: google.maps.MouseEvent) => void;
   private pFeatureClick: (event: google.maps.Data.MouseEvent) => void;
   private pClusterClick:
-    | ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map) => void)
+    | ((marker: google.maps.Marker, event: google.maps.MouseEvent, mapInstance: google.maps.Map, clusterer: SuperClusterAdapter) => void)
     | undefined;
   private pFeatureStyle: google.maps.Data.StylingFunction;
   private pServerSideFeatureToSuperCluster: (
@@ -530,7 +530,7 @@ export class SuperClusterAdapter implements ISuperClusterAdapter {
             });
           } else {
             if (this.useServerSideClusterer && this.pClusterClick) {
-              this.pClusterClick(marker, event, this.map);
+              this.pClusterClick(marker, event, this.map, this);
             } else {
               const bounds = ClustererHelper.getClusterBounds(this.map, marker, this.radius);
               if (!bounds.isEmpty()) {
